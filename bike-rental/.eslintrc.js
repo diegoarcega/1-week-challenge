@@ -18,6 +18,10 @@ module.exports = {
     'airbnb-typescript',
     'plugin:prettier/recommended',
   ],
+  rules: {
+    'import/prefer-default-export': 'off',
+    'react/no-unescaped-entities': 'off',
+  },
   root: true,
   env: {
     node: true,
