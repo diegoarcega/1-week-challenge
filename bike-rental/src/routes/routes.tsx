@@ -1,6 +1,9 @@
-import React from 'react';
-import { BrowserRouter, Route, Switch, Redirect } from 'react-router-dom';
+import React, { Suspense } from 'react';
+import { BrowserRouter, Route, Switch, Redirect, RouteComponentProps } from 'react-router-dom';
 import { LoginPage } from '../pages/login';
+
+const ManagerRoutesLazy = React.lazy(() => import(/* webpackChunkName: "ManagerRoutes" */ './manager.routes'));
+const UserRoutesLazy = React.lazy(() => import(/* webpackChunkName: "UserRoutes" */ './user.routes'));
 
 const Routes = (): JSX.Element => {
   return (
@@ -12,12 +15,22 @@ const Routes = (): JSX.Element => {
         <Route path="/login" exact>
           <LoginPage />
         </Route>
-        <Route path="/manager">
-          <p>I'm manager</p>
-        </Route>
-        <Route path="/dashboard">
-          <p>I'm dashboard</p>
-        </Route>
+        <Route
+          path="/manager"
+          render={(props: RouteComponentProps) => (
+            <Suspense fallback="loading">
+              <ManagerRoutesLazy history={props.history} location={props.location} match={props.match} />
+            </Suspense>
+          )}
+        />
+        <Route
+          path="/dashboard"
+          render={(props: RouteComponentProps) => (
+            <Suspense fallback="loading">
+              <UserRoutesLazy history={props.history} location={props.location} match={props.match} />
+            </Suspense>
+          )}
+        />
         <Route>
           <p>not found</p>
         </Route>

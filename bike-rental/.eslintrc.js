@@ -17,6 +17,8 @@ module.exports = {
     'plugin:@typescript-eslint/recommended-requiring-type-checking',
     'airbnb-typescript',
     'plugin:prettier/recommended',
+    'plugin:react/recommended',
+    'plugin:react-hooks/recommended',
   ],
   rules: {
     'import/prefer-default-export': 'off',

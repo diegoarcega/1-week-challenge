@@ -1,42 +1,52 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import React from 'react';
-import { Box, Heading, Button, chakra, FormControl, FormLabel, Input, Stack } from '@chakra-ui/react';
-import logo from '../logo.svg';
+import React, { FormEvent, useRef } from 'react';
+import { useHistory } from 'react-router-dom';
+import { Box, Button, Flex, FormControl, FormLabel, Heading, Input, Stack, Image } from '@chakra-ui/react';
 
 export const LoginPage = (): JSX.Element => {
-  return (
-    <Box minH="100vh" py="12" px={{ base: '4', lg: '8' }}>
-      <Box maxW="md" mx="auto">
-        <Box mx="auto" h="12" mb="10">
-          <chakra.img src={logo} alt="bike-rental" maxHeight="100%" />
-        </Box>
-        <Heading textAlign="center" size="xl" fontWeight="extrabold" mb="10">
-          Log in to your account
-        </Heading>
-        <Box py="8" px={{ base: '4', md: '10' }} shadow="base" rounded={{ sm: 'lg' }} bg="white">
-          <chakra.form
-            onSubmit={(e) => {
-              e.preventDefault();
-              // your login logic here
-            }}
-          >
-            <Stack spacing="6">
-              <FormControl id="email">
-                <FormLabel>Email address</FormLabel>
-                <Input name="email" type="email" autoComplete="email" required />
-              </FormControl>
-              <FormControl id="password">
-                <FormLabel>Password</FormLabel>
-                <Input name="password" type="password" autoComplete="password" required />
-              </FormControl>
+  const history = useHistory();
+  const emailRef = useRef(null);
+  const passwordRef = useRef(null);
 
-              <Button type="submit" colorScheme="blue" size="lg" fontSize="md">
-                Log in
-              </Button>
-            </Stack>
-          </chakra.form>
-        </Box>
-      </Box>
-    </Box>
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    history.push('/manager/manage');
+  }
+
+  return (
+    <Stack minH="100vh" direction={{ base: 'column', md: 'row' }}>
+      <Flex p={8} flex={1} align="center" justify="center">
+        <Stack spacing={4} w="full" maxW="md">
+          <Heading fontSize="6xl" color="green.300" mb="3" fontWeight="black" letterSpacing="tighter">
+            TRECK
+          </Heading>
+          <Heading fontSize="2xl">Sign in to your account</Heading>
+          <Box py="8" px={{ base: '4', md: '10' }} shadow="base" rounded={{ sm: 'lg' }} bg="white">
+            <form onSubmit={handleSubmit}>
+              <Stack spacing="6">
+                <FormControl id="email">
+                  <FormLabel>Email address</FormLabel>
+                  <Input type="email" ref={emailRef} />
+                </FormControl>
+                <FormControl id="password">
+                  <FormLabel>Password</FormLabel>
+                  <Input type="password" ref={passwordRef} />
+                </FormControl>
+                <Button type="submit" colorScheme="green" size="lg" fontSize="md">
+                  Sign in
+                </Button>
+              </Stack>
+            </form>
+          </Box>
+        </Stack>
+      </Flex>
+      <Flex flex={1}>
+        <Image
+          alt="Login Image"
+          objectFit="cover"
+          maxHeight="100vh"
+          src="https://gumlet.assettype.com/bloombergquint%2F2020-08%2Fcdfaedf9-42e9-452a-9c08-817a9dac38a7%2Fbicycle.jpg?rect=288%2C0%2C3635%2C2617&auto=format%2Ccompress&w=1200"
+        />
+      </Flex>
+    </Stack>
   );
 };
