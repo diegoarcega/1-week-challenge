@@ -1,16 +1,57 @@
-import React, { FormEvent, useRef } from 'react';
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import React from 'react';
 import { useHistory } from 'react-router-dom';
-import { Box, Button, Flex, FormControl, FormLabel, Heading, Input, Stack, Image } from '@chakra-ui/react';
+import { Box, Button, Flex, Heading, Stack, Image, FormErrorMessage, FormControl } from '@chakra-ui/react';
+import { useForm, SubmitHandler } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { ErrorMessage } from '@hookform/error-message';
+import * as yup from 'yup';
+import { Input } from '../components/input/input';
+import emailSchema from '../validations/email';
+import passwordSchema from '../validations/password';
+import { login } from '../services/auth.service';
+
+const schema = yup.object().shape({
+  email: emailSchema,
+  password: passwordSchema,
+});
+
+interface FormInput {
+  email: string;
+  password: string;
+  formError: string;
+}
 
 export const LoginPage = (): JSX.Element => {
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    setError,
+    clearErrors,
+  } = useForm({
+    resolver: yupResolver(schema),
+  });
   const history = useHistory();
-  const emailRef = useRef(null);
-  const passwordRef = useRef(null);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    history.push('/dashboard');
-  }
+  const onSubmit: SubmitHandler<FormInput> = async ({ email, password }) => {
+    try {
+      clearErrors('formError');
+      const user = await login({ email, password });
+
+      if (user.roles.includes('manager')) {
+        history.push('/manager');
+        return;
+      }
+
+      history.push('/dashboard');
+    } catch (e) {
+      setError('formError', {
+        type: 'manual',
+        message: e.message,
+      });
+    }
+  };
 
   return (
     <Stack minH="100vh" direction={{ base: 'column', md: 'row' }}>
@@ -21,16 +62,34 @@ export const LoginPage = (): JSX.Element => {
           </Heading>
           <Heading fontSize="2xl">Sign in to your account</Heading>
           <Box py="8" px={{ base: '4', md: '10' }} shadow="base" rounded={{ sm: 'lg' }} bg="white">
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit(onSubmit)}>
               <Stack spacing="6">
-                <FormControl id="email">
-                  <FormLabel>Email address</FormLabel>
-                  <Input type="email" ref={emailRef} />
-                </FormControl>
-                <FormControl id="password">
-                  <FormLabel>Password</FormLabel>
-                  <Input type="password" ref={passwordRef} />
-                </FormControl>
+                <Input
+                  name="email"
+                  type="email"
+                  control={control}
+                  label="Email address"
+                  isRequired
+                  error={errors.email?.message}
+                />
+                <Input
+                  name="password"
+                  type="password"
+                  control={control}
+                  label="Password"
+                  isRequired
+                  error={errors.password?.message}
+                />
+                <ErrorMessage
+                  errors={errors}
+                  name="formError"
+                  render={({ message }) => (
+                    <FormControl isInvalid={!!message} mt="0">
+                      <FormErrorMessage>{message}</FormErrorMessage>
+                    </FormControl>
+                  )}
+                />
+
                 <Button type="submit" colorScheme="green" size="lg" fontSize="md">
                   Sign in
                 </Button>

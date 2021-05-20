@@ -26,6 +26,7 @@ module.exports = {
     '@typescript-eslint/no-unsafe-assignment': 'off',
     '@typescript-eslint/no-unsafe-call': 'off',
     'react/jsx-props-no-spreading': 'off',
+    'react/require-default-props': 'off',
     // staying, functions are naturally hoisted
     '@typescript-eslint/no-use-before-define': ['error', { functions: false }],
   },

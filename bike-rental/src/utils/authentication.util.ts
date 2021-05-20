@@ -19,6 +19,7 @@ export function isAuthenticated(): boolean {
 }
 
 export function isTokenValid(token: string): boolean {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
   const decodedToken = jwtDecode(token) as { exp: number };
   const isExpired = decodedToken.exp * 1000 < Date.now();
 
@@ -30,5 +31,5 @@ export function isTokenValid(token: string): boolean {
 }
 
 export function decodeToken(token: string): { exp: number } {
-  return jwtDecode(token) as { exp: number };
+  return jwtDecode(token);
 }
