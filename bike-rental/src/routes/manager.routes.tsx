@@ -4,6 +4,8 @@ import { Container } from '@chakra-ui/react';
 import Navigation, { NavItem } from '../container/navigation.container';
 import { UsersListPage } from '../pages/manager/manage/users/users-list';
 import { UserDetailPage } from '../pages/manager/manage/users/user-detail';
+import { BikesListPage } from '../pages/manager/manage/bikes/bikes-list';
+import { ReservationsPage } from '../pages/manager/reservations/reservations';
 
 const NAV_ITEMS: NavItem[] = [
   {
@@ -33,24 +35,18 @@ const ManagerRoutes = ({ match }: RouteComponentProps): JSX.Element => {
       <Navigation options={NAV_ITEMS} />
       <Container maxW="container.xl" mt="10">
         <Switch>
-          <Route path={`${match.path}/manage`} exact>
-            <p>* Create, Read, Edit, and Delete Bikes. * Create, Read, Edit, and Delete Users and Managers.</p>
-          </Route>
           <Route path={`${match.path}/manage/users`} exact>
             <UsersListPage />
           </Route>
           <Route path={`${match.path}/manage/users/:id`} exact>
             <UserDetailPage />
           </Route>
-          <Route path={`${match.path}/manage/bike`} exact>
-            <p>* Create, Read, Edit, and Delete Bikes.</p>
+          <Route path={`${match.path}/manage/bikes`} exact>
+            <BikesListPage />
           </Route>
 
           <Route path={`${match.path}/reservations`}>
-            <p>
-              * See all the users who reserved a bike, and the period of time they did it. * See all the bikes reserved
-              by a user and the period of time they did it.
-            </p>
+            <ReservationsPage />
           </Route>
           <Route>
             <p>not found</p>
