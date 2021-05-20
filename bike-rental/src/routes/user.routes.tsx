@@ -2,6 +2,8 @@ import { Container } from '@chakra-ui/react';
 import React from 'react';
 import { Route, RouteComponentProps, Switch } from 'react-router-dom';
 import Navigation, { NavItem } from '../container/navigation.container';
+import { ReservationsPage } from '../pages/user/reservations';
+import { ReservePage } from '../pages/user/reserve';
 
 const NAV_ITEMS: NavItem[] = [
   {
@@ -21,14 +23,16 @@ const UserRoutes = ({ match }: RouteComponentProps): JSX.Element => {
       <Container maxW="container.xl" mt="10">
         <Switch>
           <Route path={`${match.path}`} exact>
-            <p>
+            <ReservePage />
+            {/* <p>
               * See a list of all available bikes for some specific dates. * Filter by model, color, location, or rate
               averages. * Reserve a bike for a specific period of time. * Rate the bikes with a score of 1 to 5.
-            </p>
+            </p> */}
           </Route>
 
           <Route path={`${match.path}/reservations`} exact>
-            <p>* Cancel a reservation.</p>
+            <ReservationsPage />
+            {/* <p>* Cancel a reservation.</p> */}
           </Route>
           <Route>
             <p>not found</p>
