@@ -1,5 +1,5 @@
 import React from 'react';
-import { Controller, Control } from 'react-hook-form';
+// import {  UseFormRegister } from 'react-hook-form';
 import { Input as InputChakra, InputProps, FormControl, FormLabel, FormErrorMessage } from '@chakra-ui/react';
 
 interface Props extends InputProps {
@@ -7,23 +7,18 @@ interface Props extends InputProps {
   isRequired?: boolean;
   name: string;
   label?: string;
-  control: Control;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  register: any;
 }
 
 export const Input = (props: Props): JSX.Element => {
-  const { error, isRequired, label, name, control, defaultValue, ...otherProps } = props;
+  const { error, isRequired, label, name, register, defaultValue, ...otherProps } = props;
 
   return (
     <>
-      <FormControl isInvalid={!!error}>
+      <FormControl isInvalid={!!error} isRequired={isRequired}>
         {label && <FormLabel htmlFor={name}>{label}</FormLabel>}
-        <Controller
-          name={name}
-          control={control}
-          defaultValue={defaultValue}
-          render={({ field }) => <InputChakra {...otherProps} {...field} />}
-        />
-
+        <InputChakra {...register(name)} id={name} {...otherProps} />
         <FormErrorMessage>{error}</FormErrorMessage>
       </FormControl>
     </>
