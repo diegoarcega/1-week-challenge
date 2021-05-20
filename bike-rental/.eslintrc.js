@@ -12,17 +12,21 @@ module.exports = {
     'plugin:security/recommended',
     'plugin:sonarjs/recommended',
     'eslint:recommended',
+    'plugin:react/recommended',
+    'plugin:react-hooks/recommended',
     'plugin:@typescript-eslint/eslint-recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:@typescript-eslint/recommended-requiring-type-checking',
     'airbnb-typescript',
     'plugin:prettier/recommended',
-    'plugin:react/recommended',
-    'plugin:react-hooks/recommended',
   ],
   rules: {
     'import/prefer-default-export': 'off',
     'react/no-unescaped-entities': 'off',
+    '@typescript-eslint/no-unsafe-assignment': 'off',
+    'react/jsx-props-no-spreading': 'off',
+    // staying, functions are naturally hoisted
+    '@typescript-eslint/no-use-before-define': ['error', { functions: false }],
   },
   root: true,
   env: {
