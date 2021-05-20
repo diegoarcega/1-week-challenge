@@ -61,6 +61,8 @@ export default function Navigation({ options }: Props): JSX.Element {
         <Container maxW="container.xl" display="flex">
           <Flex flex={{ base: 1 }} justify={{ base: 'start' }}>
             <Heading
+              as={NavLink}
+              to="/"
               textAlign={useBreakpointValue({ base: 'left' })}
               fontSize="24"
               mb="0"
@@ -77,7 +79,7 @@ export default function Navigation({ options }: Props): JSX.Element {
           </Flex>
 
           <Stack flex={{ base: 1, md: 0 }} justify="flex-end" direction="row" spacing={6}>
-            <Button as="a" fontSize={{ base: 'sm', md: 'lg' }} fontWeight={400} variant="link" href="#">
+            <Button as={NavLink} fontSize={{ base: 'sm', md: 'lg' }} fontWeight={400} variant="link" to="/">
               Log out
             </Button>
           </Stack>

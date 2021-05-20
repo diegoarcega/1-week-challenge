@@ -9,7 +9,7 @@ export const LoginPage = (): JSX.Element => {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    history.push('/manager/manage');
+    history.push('/dashboard');
   }
 
   return (
