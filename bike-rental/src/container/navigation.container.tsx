@@ -1,4 +1,5 @@
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 import {
   Box,
   Flex,
@@ -21,37 +22,19 @@ import {
 import { HamburgerIcon, CloseIcon, ChevronDownIcon, ChevronRightIcon } from '@chakra-ui/icons';
 
 /* eslint-disable react/require-default-props, react/no-unused-prop-types */
-interface NavItem {
+export interface NavItem {
   label: string;
   subLabel?: string;
-  children?: Array<NavItem>;
+  children?: NavItem[];
   href?: string;
 }
 /* eslint-enable react/require-default-props, react/no-unused-prop-types */
 
-const NAV_ITEMS: Array<NavItem> = [
-  {
-    label: 'Manage',
-    children: [
-      {
-        label: 'Users',
-        subLabel: 'Create, Edit, and Delete Users',
-        href: '#',
-      },
-      {
-        label: 'Bikes',
-        subLabel: 'Create, Edit, and Delete Bikes',
-        href: '#',
-      },
-    ],
-  },
-  {
-    label: 'Reservations',
-    href: '#',
-  },
-];
+interface Props {
+  options: NavItem[];
+}
 
-export default function Navigation(): JSX.Element {
+export default function Navigation({ options }: Props): JSX.Element {
   const { isOpen, onToggle } = useDisclosure();
 
   return (
@@ -89,7 +72,7 @@ export default function Navigation(): JSX.Element {
             </Heading>
 
             <Flex display={{ base: 'none', md: 'flex' }} ml={10}>
-              <DesktopNav />
+              <DesktopNav options={options} />
             </Flex>
           </Flex>
 
@@ -102,22 +85,23 @@ export default function Navigation(): JSX.Element {
       </Flex>
 
       <Collapse in={isOpen} animateOpacity>
-        <MobileNav />
+        <MobileNav options={options} />
       </Collapse>
     </Box>
   );
 }
 
-function DesktopNav() {
+function DesktopNav({ options }: Props) {
   return (
     <Stack direction="row" spacing={4}>
-      {NAV_ITEMS.map((navItem) => (
+      {options.map((navItem) => (
         <Box key={navItem.label}>
           <Popover trigger="hover" placement="bottom-start">
             <PopoverTrigger>
               <Link
                 p={2}
-                href={navItem.href ?? '#'}
+                as={NavLink}
+                to={navItem.href ?? '#'}
                 fontSize="lg"
                 fontWeight={500}
                 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -159,7 +143,8 @@ function DesktopNav() {
 function DesktopSubNav({ label, href, subLabel }: NavItem) {
   return (
     <Link
-      href={href}
+      as={NavLink}
+      to={href ?? '#'}
       role="group"
       display="block"
       p={2}
@@ -189,10 +174,10 @@ function DesktopSubNav({ label, href, subLabel }: NavItem) {
   );
 }
 
-function MobileNav() {
+function MobileNav({ options }: Props) {
   return (
     <Stack bg={useColorModeValue('white', 'gray.800')} p={4} display={{ md: 'none' }}>
-      {NAV_ITEMS.map((navItem) => (
+      {options.map((navItem) => (
         <MobileNavItem key={navItem.label} {...navItem} />
       ))}
     </Stack>
@@ -239,7 +224,7 @@ function MobileNavItem({ label, children, href }: NavItem) {
         >
           {children &&
             children.map((child) => (
-              <Link key={child.label} py={2} href={child.href}>
+              <Link as={NavLink} to={child.href ?? '#'} key={child.label} py={2}>
                 {child.label}
               </Link>
             ))}
