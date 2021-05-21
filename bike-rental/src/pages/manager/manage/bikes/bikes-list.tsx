@@ -1,48 +1,17 @@
 import React from 'react';
 import { useHistory } from 'react-router-dom';
 import { Table, Thead, Tbody, Tr, Th, Td, Button } from '@chakra-ui/react';
+import { Bike } from 'types/bike.type';
+import { getAllBikes } from 'services/bike.service';
+import { useQuery } from 'react-query';
 
-interface Bike {
-  id: number;
-  model: string;
-  color: string;
-  location: string;
-  rating: number;
-  isAvailable: boolean;
-}
-
-const COLUMNS = ['id', 'model', 'color', 'location', 'rating', 'availability', 'action'];
-const USERS: Bike[] = [
-  {
-    id: 1,
-    model: '55-p4',
-    color: 'blue',
-    location: 'san diego, sf, usa',
-    rating: 4,
-    isAvailable: true,
-  },
-  {
-    id: 2,
-    model: '54-p4',
-    color: 'yellow',
-    location: 'san raphael, sf, usa',
-    rating: 5,
-    isAvailable: false,
-  },
-];
-
+const COLUMNS = ['id', 'model', 'color', 'location', 'action'];
 interface DataTableProps {
   columns: string[];
-  data: {
-    id: number;
-    model: string;
-    color: string;
-    location: string;
-    rating: number;
-    isAvailable: boolean;
+  data: (Bike & {
     onOpen: () => void;
     onEdit: () => void;
-  }[];
+  })[];
 }
 // TODO: make it responsive
 function DataTable({ columns, data }: DataTableProps) {
@@ -62,8 +31,7 @@ function DataTable({ columns, data }: DataTableProps) {
             <Td>{d.model}</Td>
             <Td>{d.color}</Td>
             <Td>{d.location}</Td>
-            <Td>{d.rating}</Td>
-            <Td>{d.isAvailable}</Td>
+
             <Td>
               <Button onClick={d.onEdit} size="sm">
                 edit
@@ -78,12 +46,26 @@ function DataTable({ columns, data }: DataTableProps) {
 
 export const BikesListPage = (): JSX.Element => {
   const history = useHistory();
+  const { data, error, isLoading } = useQuery<{ bikes: Bike[] }>(['bikes'], getAllBikes);
 
-  const users = USERS.map((user) => ({
-    ...user,
-    onOpen: () => history.push(`/manager/manage/bikes/${user.id}`),
-    onEdit: () => history.push(`/manager/manage/bikes/edit/${user.id}`),
+  if (isLoading) {
+    return <h1>'loading'</h1>;
+  }
+
+  if (!data) {
+    return <h1>'nothing'</h1>;
+  }
+
+  if (error) {
+    return <h1>'error'</h1>;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  const bikes = data.bikes.map((bike) => ({
+    ...bike,
+    onOpen: () => history.push(`/manager/manage/bikes/${bike.id}`),
+    onEdit: () => history.push(`/manager/manage/bikes/edit/${bike.id}`),
   }));
 
-  return <DataTable data={users} columns={COLUMNS} />;
+  return <DataTable data={bikes} columns={COLUMNS} />;
 };

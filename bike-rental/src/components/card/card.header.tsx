@@ -4,13 +4,15 @@ import * as React from 'react';
 interface Props {
   title: string;
   // eslint-disable-next-line react/require-default-props
+  prefix?: React.ReactNode;
   action?: React.ReactNode;
 }
 
 export const CardHeader = (props: Props): JSX.Element => {
-  const { title, action } = props;
+  const { title, action, prefix } = props;
   return (
     <Flex align="center" justify="space-between" px="6" py="4" borderBottomWidth="1px">
+      {prefix}
       <Heading as="h2" fontSize="lg">
         {title}
       </Heading>

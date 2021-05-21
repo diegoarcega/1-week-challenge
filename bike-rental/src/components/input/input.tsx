@@ -18,7 +18,7 @@ export const Input = (props: Props): JSX.Element => {
     <>
       <FormControl isInvalid={!!error} isRequired={isRequired}>
         {label && <FormLabel htmlFor={name}>{label}</FormLabel>}
-        <InputChakra {...register(name)} id={name} {...otherProps} />
+        <InputChakra {...register(name)} defaultValue={defaultValue} id={name} {...otherProps} />
         <FormErrorMessage>{error}</FormErrorMessage>
       </FormControl>
     </>

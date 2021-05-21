@@ -36,10 +36,9 @@ export function createAccount({
   password: string;
 }): Promise<Pick<User, 'email' | 'id' | 'name'>> {
   return new Promise((resolve, reject) => {
-    console.log({ name });
     if (email && password && name) {
       resolve({
-        id: Math.random(),
+        id: String(Math.random()),
         name,
         email,
       });

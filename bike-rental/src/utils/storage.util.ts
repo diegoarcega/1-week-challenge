@@ -4,7 +4,7 @@ export function removeItem(key: string): void {
   window.localStorage.removeItem(key);
 }
 
-export function getItem(key: string): unknown {
+export function getItem<T>(key: string): T {
   let parsedItem = null;
 
   try {
@@ -17,7 +17,7 @@ export function getItem(key: string): unknown {
     parsedItem = null;
   }
 
-  return parsedItem;
+  return parsedItem as T;
 }
 
 export function setItem(key: string, value: unknown): void | Error {

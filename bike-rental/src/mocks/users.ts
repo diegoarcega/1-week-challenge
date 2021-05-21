@@ -1,5 +1,5 @@
 export const USER_MANAGER = {
-  id: 1,
+  id: '1',
   name: 'Diego Manager',
   email: 'diego.manager@gmail.com',
   password: '12345678',
@@ -7,7 +7,7 @@ export const USER_MANAGER = {
 };
 
 export const USER = {
-  id: 2,
+  id: '2',
   name: 'Diego Normal',
   email: 'diego.normal@gmail.com',
   password: '87654321',

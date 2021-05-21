@@ -3,7 +3,7 @@ import * as React from 'react';
 
 interface Props extends FlexProps {
   label: string;
-  value: string;
+  value: React.ReactNode;
 }
 
 export const Property = (props: Props): JSX.Element => {
