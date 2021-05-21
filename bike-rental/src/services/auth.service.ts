@@ -1,5 +1,5 @@
 import api from './api';
-import { USER_MANAGER, USER } from '../__mocks__/users';
+import { USER_MANAGER, USER } from '../mocks/users';
 import * as Storage from '../utils/storage.util';
 import { User } from '../types/user.type';
 

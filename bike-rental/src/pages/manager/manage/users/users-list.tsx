@@ -1,22 +1,12 @@
 import React from 'react';
 import { useHistory } from 'react-router-dom';
 import { Table, Thead, Tbody, Tr, Th, Td, Button } from '@chakra-ui/react';
+import { request, gql } from 'graphql-request';
+import { useQuery } from 'react-query';
+import { User } from '../../../../types/user.type';
+import { config } from '../../../../config/config';
 
 const COLUMNS = ['id', 'name', 'email', 'roles', 'action'];
-const USERS = [
-  {
-    id: 1,
-    name: 'Diego',
-    email: 'diegoarcega@gmail.com',
-    roles: ['manager'],
-  },
-  {
-    id: 2,
-    name: 'Diego c',
-    email: 'diegoarcega2@gmail.com',
-    roles: [],
-  },
-];
 
 interface DataTableProps {
   columns: string[];
@@ -62,7 +52,35 @@ function DataTable({ columns, data }: DataTableProps) {
 export const UsersListPage = (): JSX.Element => {
   const history = useHistory();
 
-  const users = USERS.map((user) => ({
+  const { data, error, isLoading } = useQuery<{ users: User[] }>(['users'], () => {
+    return request(
+      config.baseApiUrl,
+      gql`
+        query GetUsers {
+          users {
+            id
+            name
+            email
+            roles
+          }
+        }
+      `
+    );
+  });
+
+  if (isLoading) {
+    return <h1>'loading'</h1>;
+  }
+
+  if (!data) {
+    return <h1>'nothing'</h1>;
+  }
+
+  if (error) {
+    return <h1>'error'</h1>;
+  }
+
+  const users = data.users.map((user) => ({
     ...user,
     onOpen: () => history.push(`/manager/manage/users/${user.id}`),
     onEdit: () => history.push(`/manager/manage/users/edit/${user.id}`),
