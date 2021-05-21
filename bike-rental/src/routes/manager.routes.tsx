@@ -38,7 +38,7 @@ const ManagerRoutes = ({ match }: RouteComponentProps): JSX.Element => {
           <Route path={`${match.path}/manage/users`} exact>
             <UsersListPage />
           </Route>
-          <Route path={`${match.path}/manage/users/:id`} exact>
+          <Route path={`${match.path}/manage/users/:userId`} exact>
             <UserDetailPage />
           </Route>
           <Route path={`${match.path}/manage/bikes`} exact>
