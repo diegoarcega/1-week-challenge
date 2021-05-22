@@ -10,7 +10,6 @@ module.exports = {
     'plugin:json/recommended',
     'plugin:promise/recommended',
     'plugin:security/recommended',
-    'plugin:sonarjs/recommended',
     'eslint:recommended',
     'plugin:@typescript-eslint/eslint-recommended',
     'plugin:@typescript-eslint/recommended',
@@ -28,6 +27,7 @@ module.exports = {
     'react/jsx-props-no-spreading': 'off',
     'react/require-default-props': 'off',
     '@typescript-eslint/no-unused-vars': 'warn',
+    // 'no-unneeded-ternary': 'warn',
     // staying, functions are naturally hoisted
     '@typescript-eslint/no-use-before-define': ['error', { functions: false }],
   },

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Route, RouteComponentProps, Switch } from 'react-router-dom';
-import { Container } from '@chakra-ui/react';
+import { Container, Heading } from '@chakra-ui/react';
 import Navigation, { NavItem } from '../container/navigation.container';
 import { UsersListPage } from '../pages/manager/manage/users/users-list';
 import { UserDetailPage } from '../pages/manager/manage/users/user-detail';
@@ -49,7 +49,7 @@ const ManagerRoutes = ({ match }: RouteComponentProps): JSX.Element => {
             <ReservationsPage />
           </Route>
           <Route>
-            <p>not found</p>
+            <Heading>Page not found</Heading>
           </Route>
         </Switch>
       </Container>

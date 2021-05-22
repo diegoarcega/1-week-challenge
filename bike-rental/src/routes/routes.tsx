@@ -1,3 +1,4 @@
+import { Center, Spinner } from '@chakra-ui/react';
 import React, { Suspense } from 'react';
 import { BrowserRouter, Route, Switch, Redirect, RouteComponentProps } from 'react-router-dom';
 import { LoginPage } from '../pages/login';
@@ -5,6 +6,12 @@ import { CreateAccountPage } from '../pages/signup';
 
 const ManagerRoutesLazy = React.lazy(() => import(/* webpackChunkName: "ManagerRoutes" */ './manager.routes'));
 const UserRoutesLazy = React.lazy(() => import(/* webpackChunkName: "UserRoutes" */ './user.routes'));
+
+const LoadingFallback = () => (
+  <Center height="100vh">
+    <Spinner size="xl" color="green.500" />
+  </Center>
+);
 
 const Routes = (): JSX.Element => {
   return (
@@ -22,7 +29,7 @@ const Routes = (): JSX.Element => {
         <Route
           path="/manager"
           render={(props: RouteComponentProps) => (
-            <Suspense fallback="loading">
+            <Suspense fallback={<LoadingFallback />}>
               <ManagerRoutesLazy history={props.history} location={props.location} match={props.match} />
             </Suspense>
           )}
@@ -30,7 +37,7 @@ const Routes = (): JSX.Element => {
         <Route
           path="/dashboard"
           render={(props: RouteComponentProps) => (
-            <Suspense fallback="loading">
+            <Suspense fallback={LoadingFallback}>
               <UserRoutesLazy history={props.history} location={props.location} match={props.match} />
             </Suspense>
           )}

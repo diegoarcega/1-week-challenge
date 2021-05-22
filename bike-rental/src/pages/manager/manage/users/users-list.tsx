@@ -1,40 +1,19 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useHistory } from 'react-router-dom';
-import {
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  Button,
-  ButtonGroup,
-  useToast,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  PopoverHeader,
-  PopoverBody,
-  PopoverArrow,
-  PopoverCloseButton,
-  VStack,
-  Text,
-  Box,
-  Flex,
-} from '@chakra-ui/react';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { deleteUser, getAllUsers } from 'services/user.service';
+import { Table, Thead, Tbody, Tr, Th, Td, Text, Flex } from '@chakra-ui/react';
+import { useQuery } from 'react-query';
+import { getAllUsers } from 'services/user.service';
 import { User } from 'types/user.type';
+import { RequestStatus } from 'components/request-status/request-status';
 
-const COLUMNS = ['id', 'name', 'email', 'roles', 'actions'];
+const COLUMNS = ['id', 'name', 'email', 'roles'];
 interface DataTableProps {
   columns: string[];
   data: (User & {
     onOpen: () => void;
-    onDelete: () => void;
   })[];
 }
-// TODO: make it responsive
+
 function DataTable({ columns, data }: DataTableProps) {
   return (
     <Table variant="simple" bg="white">
@@ -47,49 +26,12 @@ function DataTable({ columns, data }: DataTableProps) {
       </Thead>
       <Tbody display={{ base: 'table-row-group', md: 'none' }}>
         {data.map((d) => (
-          <Tr key={d.id}>
+          <Tr key={d.id} onClick={d.onOpen}>
             <Td>
               <Flex flexDirection="column">
                 <Text>{d.name}</Text>
                 <Text fontSize={{ base: 'xs', md: 'md' }}>{d.email}</Text>
                 <Text fontSize={{ base: 'xs', md: 'md' }}>{d.roles.join(',')}</Text>
-                <Flex flexDirection={{ base: 'column', sm: 'row' }} spacing="6" mt="5">
-                  <Popover>
-                    <PopoverTrigger>
-                      <Button variant="outline" fontSize={{ base: 'xs', md: 'md' }}>
-                        DELETE
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent>
-                      <PopoverArrow />
-                      <PopoverCloseButton />
-                      <PopoverHeader>Confirmation!</PopoverHeader>
-                      <PopoverBody>
-                        <VStack>
-                          <Text fontSize={{ base: 'xs', md: 'md' }}>Are you sure you want delete this user?</Text>
-                          <Button
-                            colorScheme="red"
-                            onClick={d.onDelete}
-                            variant="solid"
-                            fontSize={{ base: 'xs', md: 'md' }}
-                          >
-                            Yes, delete this user
-                          </Button>
-                        </VStack>
-                      </PopoverBody>
-                    </PopoverContent>
-                  </Popover>
-                  <Button
-                    onClick={d.onOpen}
-                    colorScheme="green"
-                    variant="outline"
-                    fontSize={{ base: 'xs', md: 'md' }}
-                    ml={{ sm: '5' }}
-                    width={{ sm: '36' }}
-                  >
-                    OPEN
-                  </Button>
-                </Flex>
               </Flex>
             </Td>
           </Tr>
@@ -97,45 +39,25 @@ function DataTable({ columns, data }: DataTableProps) {
       </Tbody>
       <Tbody display={{ base: 'none', md: 'table-row-group' }}>
         {data.map((d) => (
-          <Tr key={d.id}>
+          <Tr
+            key={d.id}
+            onClick={d.onOpen}
+            _hover={{
+              cursor: 'pointer',
+              backgroundColor: 'green.50',
+            }}
+          >
             <Td>
-              <Text fontSize={{ base: 'xs', sm: 'sm' }}>{d.id}</Text>
+              <Text>{d.id}</Text>
             </Td>
             <Td>
-              <Text fontSize={{ base: 'xs', sm: 'sm' }}>{d.name}</Text>
+              <Text>{d.name}</Text>
             </Td>
             <Td>
-              <Text fontSize={{ base: 'xs', sm: 'sm' }}>{d.email}</Text>
+              <Text>{d.email}</Text>
             </Td>
             <Td>
-              <Text fontSize={{ base: 'xs', sm: 'sm' }}>{d.roles.join(',')}</Text>
-            </Td>
-            <Td>
-              <ButtonGroup size="sm" variant="outline" spacing="6">
-                <Button onClick={d.onOpen} colorScheme="green">
-                  OPEN
-                </Button>
-                <Popover>
-                  <PopoverTrigger>
-                    <Button variant="link" size="sm">
-                      DELETE
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent>
-                    <PopoverArrow />
-                    <PopoverCloseButton />
-                    <PopoverHeader>Confirmation!</PopoverHeader>
-                    <PopoverBody>
-                      <VStack>
-                        <Text>Are you sure you want delete this user?</Text>
-                        <Button colorScheme="red" onClick={d.onDelete} variant="solid">
-                          Yes, delete this user
-                        </Button>
-                      </VStack>
-                    </PopoverBody>
-                  </PopoverContent>
-                </Popover>
-              </ButtonGroup>
+              <Text>{d.roles.join(',')}</Text>
             </Td>
           </Tr>
         ))}
@@ -149,64 +71,25 @@ const cacheKey = ['users'];
 
 export const UsersListPage = (): JSX.Element => {
   const history = useHistory();
-  const toast = useToast();
-  const queryClient = useQueryClient();
 
   const { data, error, isLoading } = useQuery<RequestType>(cacheKey, getAllUsers);
-  const { mutate, error: mutationError } = useMutation(
-    ({ userId }: { userId: User['id'] }) => {
-      return deleteUser(userId);
-    },
-    {
-      onSuccess: (dataSuccess, { userId }) => {
-        queryClient.setQueryData<RequestType | undefined>(cacheKey, (oldData) => {
-          return oldData
-            ? {
-                users: oldData.users.filter((user) => user.id !== userId),
-              }
-            : undefined;
-        });
-      },
-      // onError: (error) => {},
-    }
-  );
 
-  useEffect(() => {
-    if (mutationError) {
-      toast({
-        title: 'Error',
-        description: 'We could not process this request to delete this user',
-        duration: 5000,
-        variant: 'top-accent',
-        isClosable: true,
-        status: 'error',
-      });
-    }
-  }, [mutationError, toast]);
+  let usersData = null;
 
-  if (isLoading) {
-    return <h1>'loading'</h1>;
+  if (data?.users) {
+    usersData = data.users.map((user) => ({
+      ...user,
+      onOpen: () => history.push(`/manager/manage/users/${user.id}`),
+    }));
   }
-
-  if (!data) {
-    return <h1>'nothing'</h1>;
-  }
-
-  if (error) {
-    return <h1>'error'</h1>;
-  }
-
-  const users = data.users.map((user) => ({
-    ...user,
-    onOpen: () => history.push(`/manager/manage/users/${user.id}`),
-    onDelete: () => {
-      mutate({ userId: user.id });
-    },
-  }));
-
   return (
-    <Box maxW="100%">
-      <DataTable data={users} columns={COLUMNS} />
-    </Box>
+    <RequestStatus
+      isLoading={isLoading}
+      error={error}
+      data={usersData}
+      noResultsMessage="There are no users in the system"
+    >
+      {usersData ? <DataTable data={usersData} columns={COLUMNS} /> : null}
+    </RequestStatus>
   );
 };

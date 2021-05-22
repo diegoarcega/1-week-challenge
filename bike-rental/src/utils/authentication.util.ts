@@ -3,7 +3,7 @@ import { AUTHENTICATION_TOKEN_KEY } from '../constants/storage.constant';
 import * as Storage from './storage.util';
 
 export function getToken(): string {
-  return Storage.getItem(AUTHENTICATION_TOKEN_KEY) as string;
+  return Storage.getItem(AUTHENTICATION_TOKEN_KEY);
 }
 
 export function setToken(token: string): void | Error {

@@ -1,4 +1,4 @@
-import { Container } from '@chakra-ui/react';
+import { Container, Heading } from '@chakra-ui/react';
 import React from 'react';
 import { Route, RouteComponentProps, Switch } from 'react-router-dom';
 import Navigation, { NavItem } from '../container/navigation.container';
@@ -20,7 +20,7 @@ const UserRoutes = ({ match }: RouteComponentProps): JSX.Element => {
   return (
     <>
       <Navigation options={NAV_ITEMS} />
-      <Container maxW="container.xl" mt="10">
+      <Container maxW="container.xl" mt={{ base: '5', md: '10' }}>
         <Switch>
           <Route path={`${match.path}`} exact>
             <ReservePage />
@@ -35,7 +35,7 @@ const UserRoutes = ({ match }: RouteComponentProps): JSX.Element => {
             {/* <p>* Cancel a reservation.</p> */}
           </Route>
           <Route>
-            <p>not found</p>
+            <Heading>Page not found</Heading>
           </Route>
         </Switch>
       </Container>
