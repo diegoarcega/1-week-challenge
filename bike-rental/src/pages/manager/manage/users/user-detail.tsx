@@ -107,16 +107,17 @@ export const UserDetailPage = (): JSX.Element => {
               to="/manager/manage/users"
               variant="outline"
               icon={<IoIosArrowBack />}
+              fontSize={{ base: 'xs', md: 'md' }}
             />
           }
           action={
             <ButtonGroup>
               {isEdit && (
-                <Button variant="solid" colorScheme="green" minW="20" type="submit">
+                <Button variant="solid" colorScheme="green" type="submit" fontSize={{ base: 'xs', md: 'md' }}>
                   Save
                 </Button>
               )}
-              <Button variant="outline" minW="20" onClick={toggleEdit}>
+              <Button variant="outline" fontSize={{ base: 'xs', md: 'md' }} onClick={toggleEdit}>
                 {isEdit ? 'Cancel' : 'Edit'}
               </Button>
             </ButtonGroup>

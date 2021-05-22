@@ -33,7 +33,7 @@ const ManagerRoutes = ({ match }: RouteComponentProps): JSX.Element => {
   return (
     <>
       <Navigation options={NAV_ITEMS} />
-      <Container maxW="container.xl" mt="10">
+      <Container maxW="container.xl" mt={{ base: '5', md: '10' }}>
         <Switch>
           <Route path={`${match.path}/manage/users`} exact>
             <UsersListPage />

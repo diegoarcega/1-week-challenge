@@ -17,10 +17,10 @@ export const Property = (props: Props): JSX.Element => {
       _even={{ bg: useColorModeValue('gray.50', 'gray.600') }}
       {...flexProps}
     >
-      <Box as="dt" minWidth="180px">
+      <Box as="dt" minWidth="180px" fontSize={['sm', 'md']}>
         {label}
       </Box>
-      <Box as="dd" flex="1" fontWeight="semibold">
+      <Box as="dd" flex="1" fontWeight="semibold" fontSize={['sm', 'md']}>
         {value}
       </Box>
     </Flex>

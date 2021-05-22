@@ -19,13 +19,14 @@ import {
   PopoverCloseButton,
   VStack,
   Text,
+  Box,
+  Flex,
 } from '@chakra-ui/react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { deleteUser, getAllUsers } from 'services/user.service';
-import { User } from '../../../../types/user.type';
+import { User } from 'types/user.type';
 
 const COLUMNS = ['id', 'name', 'email', 'roles', 'actions'];
-
 interface DataTableProps {
   columns: string[];
   data: (User & {
@@ -38,19 +39,77 @@ function DataTable({ columns, data }: DataTableProps) {
   return (
     <Table variant="simple" bg="white">
       <Thead>
-        <Tr>
+        <Tr display={{ base: 'none', md: 'table-row' }}>
           {columns.map((column) => (
             <Th key={column}>{column}</Th>
           ))}
         </Tr>
       </Thead>
-      <Tbody>
+      <Tbody display={{ base: 'table-row-group', md: 'none' }}>
         {data.map((d) => (
           <Tr key={d.id}>
-            <Td>{d.id}</Td>
-            <Td>{d.name}</Td>
-            <Td>{d.email}</Td>
-            <Td>{d.roles.join(',')}</Td>
+            <Td>
+              <Flex flexDirection="column">
+                <Text>{d.name}</Text>
+                <Text fontSize={{ base: 'xs', md: 'md' }}>{d.email}</Text>
+                <Text fontSize={{ base: 'xs', md: 'md' }}>{d.roles.join(',')}</Text>
+                <Flex flexDirection={{ base: 'column', sm: 'row' }} spacing="6" mt="5">
+                  <Popover>
+                    <PopoverTrigger>
+                      <Button variant="outline" fontSize={{ base: 'xs', md: 'md' }}>
+                        DELETE
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent>
+                      <PopoverArrow />
+                      <PopoverCloseButton />
+                      <PopoverHeader>Confirmation!</PopoverHeader>
+                      <PopoverBody>
+                        <VStack>
+                          <Text fontSize={{ base: 'xs', md: 'md' }}>Are you sure you want delete this user?</Text>
+                          <Button
+                            colorScheme="red"
+                            onClick={d.onDelete}
+                            variant="solid"
+                            fontSize={{ base: 'xs', md: 'md' }}
+                          >
+                            Yes, delete this user
+                          </Button>
+                        </VStack>
+                      </PopoverBody>
+                    </PopoverContent>
+                  </Popover>
+                  <Button
+                    onClick={d.onOpen}
+                    colorScheme="green"
+                    variant="outline"
+                    fontSize={{ base: 'xs', md: 'md' }}
+                    ml={{ sm: '5' }}
+                    width={{ sm: '36' }}
+                  >
+                    OPEN
+                  </Button>
+                </Flex>
+              </Flex>
+            </Td>
+          </Tr>
+        ))}
+      </Tbody>
+      <Tbody display={{ base: 'none', md: 'table-row-group' }}>
+        {data.map((d) => (
+          <Tr key={d.id}>
+            <Td>
+              <Text fontSize={{ base: 'xs', sm: 'sm' }}>{d.id}</Text>
+            </Td>
+            <Td>
+              <Text fontSize={{ base: 'xs', sm: 'sm' }}>{d.name}</Text>
+            </Td>
+            <Td>
+              <Text fontSize={{ base: 'xs', sm: 'sm' }}>{d.email}</Text>
+            </Td>
+            <Td>
+              <Text fontSize={{ base: 'xs', sm: 'sm' }}>{d.roles.join(',')}</Text>
+            </Td>
             <Td>
               <ButtonGroup size="sm" variant="outline" spacing="6">
                 <Button onClick={d.onOpen} colorScheme="green">
@@ -58,7 +117,9 @@ function DataTable({ columns, data }: DataTableProps) {
                 </Button>
                 <Popover>
                   <PopoverTrigger>
-                    <Button variant="link">DELETE</Button>
+                    <Button variant="link" size="sm">
+                      DELETE
+                    </Button>
                   </PopoverTrigger>
                   <PopoverContent>
                     <PopoverArrow />
@@ -143,5 +204,9 @@ export const UsersListPage = (): JSX.Element => {
     },
   }));
 
-  return <DataTable data={users} columns={COLUMNS} />;
+  return (
+    <Box maxW="100%">
+      <DataTable data={users} columns={COLUMNS} />
+    </Box>
+  );
 };
