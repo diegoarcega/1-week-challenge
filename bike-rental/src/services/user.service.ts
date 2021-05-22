@@ -1,24 +1,25 @@
 import { request, gql } from 'graphql-request';
-import { config } from '../config/config';
-import { User } from '../types/user.type';
+import { config } from 'config/config';
+import { User } from 'types/user.type';
+import { api } from 'services/api';
 
+// TODO: refactor all api to use the helper
 export function getUser(userId: User['id']): Promise<{ user: User }> {
-  return request(
-    config.baseApiUrl,
-    gql`
-      query GetUser($userId: String!) {
-        user {
-          id
-          name
-          email
-          roles
-        }
+  const query = gql`
+    query GetUser($userId: String!) {
+      user {
+        id
+        name
+        email
+        roles
       }
-    `,
-    {
-      userId,
     }
-  );
+  `;
+  const variables = {
+    userId,
+  };
+
+  return api<{ user: User }>({ query, variables });
 }
 export function getAllUsers(): Promise<{ users: User[] }> {
   return request(

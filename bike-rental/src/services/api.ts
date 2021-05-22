@@ -1,37 +1,41 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import axios from 'axios';
-import * as AuthenticationUtils from '../utils/authentication.util';
+import { AUTHENTICATION_TOKEN_EXPIRED } from 'constants/authentication.constant';
+import { AUTHENTICATION_TOKEN_KEY } from 'constants/storage.constant';
+import { GraphQLClient } from 'graphql-request';
+import jwtDecode from 'jwt-decode';
+import * as Storage from 'utils/storage.util';
+import EventEmitter from 'utils/event-emitter.utils';
+import { config } from 'config/config';
 
-const api = axios.create({
-  baseURL: 'http://localhost:5000',
-});
+const client = new GraphQLClient(config.baseApiUrl);
+interface Api {
+  query: string;
+  variables: Record<string, unknown>;
+}
 
-api.interceptors.request.use((config) => {
-  const newConfig = config;
+export function api<T>({ query, variables }: Api): Promise<T> {
+  try {
+    const authToken = getValidatedToken();
+    return client.request(query, variables, {
+      authorization: authToken,
+    });
+  } catch (error) {
+    return Promise.reject(error);
+  }
+}
 
-  if (AuthenticationUtils.isAuthenticated() && !newConfig.headers.authorization) {
-    newConfig.headers.authorization = AuthenticationUtils.getToken();
+function getValidatedToken() {
+  const authToken = Storage.getItem<string>(AUTHENTICATION_TOKEN_KEY);
+
+  if (!isTokenValid(authToken)) {
+    EventEmitter.emit(AUTHENTICATION_TOKEN_EXPIRED);
+    throw new Error('Token is invalid');
   }
 
-  return newConfig;
-});
+  return authToken;
+}
 
-api.interceptors.response.use(
-  (response) => Promise.resolve(response),
-  (error) => {
-    if (error.message === 'Network Error') {
-      const currentToken = AuthenticationUtils.getToken();
-      const isTokenValid = currentToken && AuthenticationUtils.isTokenValid(currentToken);
-
-      if (!isTokenValid) {
-        // EventEmmiter.emit(AuthenticationConstants.AUTHENTICATION_TOKEN_EXPIRED);
-        return Promise.reject(error.response.data);
-      }
-    }
-
-    return Promise.reject(error.response.data);
-  }
-);
-
-export default api;
+function isTokenValid(token: string): boolean {
+  const decodedToken = jwtDecode<{ exp: number }>(token);
+  const isExpired = decodedToken.exp * 1000 < Date.now();
+  return !isExpired;
+}

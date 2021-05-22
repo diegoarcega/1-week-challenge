@@ -1,9 +1,40 @@
-import { graphql } from 'msw';
+import { graphql, GraphQLRequest, GraphQLVariables } from 'msw';
 import get from 'lodash/get';
+import { uuid } from 'uuidv4';
+import jwt from 'jsonwebtoken';
 import * as Storage from 'utils/storage.util';
 import { User } from 'types/user.type';
 import { Bike } from 'types/bike.type';
 import { Rating } from 'types/rating.type';
+
+const JWT_SECRET = 'Shhh';
+
+function createJwtToken(user: User): string {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  return jwt.sign(
+    {
+      data: user,
+    },
+    JWT_SECRET,
+    { expiresIn: '1min' }
+  ) as string;
+}
+
+function hasAuthTokenExpired(req: GraphQLRequest<GraphQLVariables>) {
+  const token = req.headers.get('authorization');
+  if (token) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    jwt.verify(token, JWT_SECRET);
+  }
+}
+
+interface UserDatabase extends User {
+  password: string;
+}
+
+interface AuthTokensDatabase {
+  [key: string]: User;
+}
 
 const USERS = [
   {
@@ -149,9 +180,21 @@ const MY_RESERVATIONS = [
 Storage.setItem('users', USERS);
 Storage.setItem('openReservations', OPEN_RESERVATIONS);
 Storage.setItem('myReservations', MY_RESERVATIONS);
+Storage.setItem('authTokens', []);
 
 export const handlers = [
   graphql.query('GetUsers', (req, res, ctx) => {
+    try {
+      hasAuthTokenExpired(req);
+    } catch {
+      return res(
+        ctx.errors([
+          {
+            message: 'Session has expired',
+          },
+        ])
+      );
+    }
     const users = Storage.getItem<User[]>('users');
 
     return res(
@@ -161,6 +204,17 @@ export const handlers = [
     );
   }),
   graphql.query('GetUser', (req, res, ctx) => {
+    try {
+      hasAuthTokenExpired(req);
+    } catch {
+      return res(
+        ctx.errors([
+          {
+            message: 'Session has expired',
+          },
+        ])
+      );
+    }
     const { userId } = req.variables;
     const users = Storage.getItem<User[]>('users');
 
@@ -171,6 +225,17 @@ export const handlers = [
     );
   }),
   graphql.mutation('DeleteUser', (req, res, ctx) => {
+    try {
+      hasAuthTokenExpired(req);
+    } catch {
+      return res(
+        ctx.errors([
+          {
+            message: 'Session has expired',
+          },
+        ])
+      );
+    }
     const { userId } = req.variables;
     const users = Storage.getItem<User[]>('users');
     const newUsers = users.filter((user) => user.id !== userId);
@@ -182,7 +247,59 @@ export const handlers = [
       })
     );
   }),
+  graphql.mutation('CreateUser', (req, res, ctx) => {
+    try {
+      hasAuthTokenExpired(req);
+    } catch {
+      return res(
+        ctx.errors([
+          {
+            message: 'Session has expired',
+          },
+        ])
+      );
+    }
+    const { name, email, password } = req.variables as Pick<User, 'name' | 'email'> & { password: string };
+    const users = Storage.getItem<UserDatabase[]>('users');
+    const userAlreadyExists = users.find((u) => u.email === email);
+
+    if (userAlreadyExists) {
+      return res(
+        ctx.errors([
+          {
+            message: 'User already exists',
+          },
+        ])
+      );
+    }
+
+    const newUser = {
+      roles: [],
+      name,
+      email,
+      id: uuid(),
+    };
+
+    Storage.setItem('users', users.concat({ ...newUser, password }));
+
+    return res(
+      ctx.data({
+        user: newUser,
+      })
+    );
+  }),
   graphql.mutation('EditUser', (req, res, ctx) => {
+    try {
+      hasAuthTokenExpired(req);
+    } catch {
+      return res(
+        ctx.errors([
+          {
+            message: 'Session has expired',
+          },
+        ])
+      );
+    }
     const { user } = req.variables as {
       user: Pick<User, 'id' | 'email' | 'name'> & { roles: string };
     };
@@ -204,7 +321,60 @@ export const handlers = [
       })
     );
   }),
+  graphql.mutation('LoginUser', (req, res, ctx) => {
+    try {
+      hasAuthTokenExpired(req);
+    } catch {
+      return res(
+        ctx.errors([
+          {
+            message: 'Session has expired',
+          },
+        ])
+      );
+    }
+    const { email, password } = req.variables as Pick<User, 'email'> & { password: string };
+    const users = Storage.getItem<UserDatabase[]>('users');
+    const foundUser = users.find((u) => u.email === email && u.password === password);
+
+    if (!foundUser) {
+      return res(
+        ctx.errors([
+          {
+            message: 'Invalid email or password',
+          },
+        ])
+      );
+    }
+
+    const authToken = createJwtToken(foundUser);
+    const authTokens: AuthTokensDatabase[] = Storage.getItem('authTokens');
+    Storage.setItem(
+      'authTokens',
+      authTokens.concat({
+        [authToken]: foundUser,
+      })
+    );
+
+    return res(
+      ctx.data({
+        token: authToken,
+        user: foundUser,
+      })
+    );
+  }),
   graphql.query('GetAllBikes', (req, res, ctx) => {
+    try {
+      hasAuthTokenExpired(req);
+    } catch {
+      return res(
+        ctx.errors([
+          {
+            message: 'Session has expired',
+          },
+        ])
+      );
+    }
     return res(
       ctx.data({
         bikes: BIKES,
@@ -212,6 +382,17 @@ export const handlers = [
     );
   }),
   graphql.query('GetAllReservations', (req, res, ctx) => {
+    try {
+      hasAuthTokenExpired(req);
+    } catch {
+      return res(
+        ctx.errors([
+          {
+            message: 'Session has expired',
+          },
+        ])
+      );
+    }
     return res(
       ctx.data({
         reservations: RESERVATIONS,
@@ -219,8 +400,19 @@ export const handlers = [
     );
   }),
   graphql.query('OpenReservations', (req, res, ctx) => {
+    try {
+      hasAuthTokenExpired(req);
+    } catch {
+      return res(
+        ctx.errors([
+          {
+            message: 'Session has expired',
+          },
+        ])
+      );
+    }
     const { perPage, page, filters } = req.variables;
-    console.log({ perPage, page, filters });
+
     const openReservations = Storage.getItem<Record<string, string>[]>('openReservations');
     return res(
       ctx.data({
@@ -234,6 +426,17 @@ export const handlers = [
     );
   }),
   graphql.query('MyReservations', (req, res, ctx) => {
+    try {
+      hasAuthTokenExpired(req);
+    } catch {
+      return res(
+        ctx.errors([
+          {
+            message: 'Session has expired',
+          },
+        ])
+      );
+    }
     const myReservations = Storage.getItem<MyReservation[]>('myReservations');
     return res(
       ctx.data({
@@ -263,7 +466,7 @@ function withPaginationAndFiltering({ filters, perPage, page, results }: Paginat
   const endIndex = page === 1 ? perPage : pageIndex + perPage;
   const paginatedResults = results.slice(pageIndex, endIndex);
   const filteredResults = withFilters({ filters, results: paginatedResults });
-  console.log({ filters, filteredResults, results });
+
   return {
     perPage,
     page,
@@ -280,8 +483,6 @@ function withFilters({ filters, results }: Pick<PaginationAndFiltering, 'filters
     }
 
     return Object.entries(filters).some(([filterKey, filterValue]) => {
-      console.log({ filterKey, filterValue }, get(result, filterKey), get(result, filterKey).includes(filterValue));
-
       return get(result, filterKey).includes(filterValue);
     });
   });

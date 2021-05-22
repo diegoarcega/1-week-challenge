@@ -6,10 +6,12 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
 import * as yup from 'yup';
-import { Input } from '../components/input/input';
-import emailSchema from '../validations/email';
-import passwordSchema from '../validations/password';
-import { login } from '../services/auth.service';
+import { Input } from 'components/input/input';
+import emailSchema from 'validations/email';
+import passwordSchema from 'validations/password';
+import { login } from 'services/auth.service';
+import * as Storage from 'utils/storage.util';
+import { AUTHENTICATION_TOKEN_KEY } from 'constants/storage.constant';
 
 const schema = yup.object().shape({
   email: emailSchema,
@@ -37,7 +39,8 @@ export const LoginPage = (): JSX.Element => {
   const onSubmit: SubmitHandler<FormInput> = async ({ email, password }) => {
     try {
       clearErrors('formError');
-      const user = await login({ email, password });
+      const { token, user } = await login({ email, password });
+      Storage.setItem(AUTHENTICATION_TOKEN_KEY, token);
 
       if (user.roles.includes('manager')) {
         history.push('/manager');
@@ -48,7 +51,7 @@ export const LoginPage = (): JSX.Element => {
     } catch (e) {
       setError('formError', {
         type: 'manual',
-        message: e.message,
+        message: e.response.errors[0].message,
       });
     }
   };

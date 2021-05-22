@@ -2,6 +2,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { BrowserRouter } from 'react-router-dom';
+
 import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { ReactQueryDevtools } from 'react-query/devtools';
@@ -35,12 +37,14 @@ const theme = extendTheme({
 
 ReactDOM.render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ChakraProvider theme={theme}>
-        <App />
-      </ChakraProvider>
-      <ReactQueryDevtools initialIsOpen={false} />
-    </QueryClientProvider>
+    <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <ChakraProvider theme={theme}>
+          <App />
+        </ChakraProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
+    </BrowserRouter>
   </React.StrictMode>,
 
   document.getElementById('root')

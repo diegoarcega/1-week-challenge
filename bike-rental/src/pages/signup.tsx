@@ -45,7 +45,6 @@ export const CreateAccountPage = (): JSX.Element => {
 
   const onSubmit: SubmitHandler<FormInput> = async ({ email, password, name }) => {
     try {
-      console.log({ email, password, name });
       clearErrors('formError');
       await createAccount({ email, password, name });
 

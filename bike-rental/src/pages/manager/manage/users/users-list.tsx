@@ -6,7 +6,7 @@ import { getAllUsers } from 'services/user.service';
 import { User } from 'types/user.type';
 import { RequestStatus } from 'components/request-status/request-status';
 
-const COLUMNS = ['id', 'name', 'email', 'roles'];
+const COLUMNS = ['name', 'email', 'roles'];
 interface DataTableProps {
   columns: string[];
   data: (User & {
@@ -47,9 +47,6 @@ function DataTable({ columns, data }: DataTableProps) {
               backgroundColor: 'green.50',
             }}
           >
-            <Td>
-              <Text>{d.id}</Text>
-            </Td>
             <Td>
               <Text>{d.name}</Text>
             </Td>

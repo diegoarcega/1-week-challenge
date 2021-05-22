@@ -1,29 +1,24 @@
-import api from './api';
-import { USER_MANAGER, USER } from '../mocks/users';
-import * as Storage from '../utils/storage.util';
+import { config } from 'config/config';
+import { gql, request } from 'graphql-request';
 import { User } from '../types/user.type';
 
-export function login({ email, password }: { email?: User['email']; password?: string }): Promise<User> {
-  return new Promise((resolve, reject) => {
-    if (email === USER_MANAGER.email && password === USER_MANAGER.password) {
-      resolve({
-        id: USER_MANAGER.id,
-        name: USER_MANAGER.name,
-        email: USER_MANAGER.email,
-        roles: USER_MANAGER.roles,
-      });
+export function login({ email, password }: { email: User['email']; password: string }): Promise<{
+  token: string;
+  user: User;
+}> {
+  return request(
+    config.baseApiUrl,
+    gql`
+      mutation LoginUser($email: String!, $password: String!) {
+        token
+        user
+      }
+    `,
+    {
+      email,
+      password,
     }
-    if (email === USER.email && password === USER.password) {
-      resolve({
-        id: USER.id,
-        name: USER.name,
-        email: USER.email,
-        roles: USER.roles,
-      });
-    }
-
-    reject(new Error('Invalid email or password'));
-  });
+  );
 }
 
 export function createAccount({
@@ -34,29 +29,23 @@ export function createAccount({
   name: User['name'];
   email: User['email'];
   password: string;
-}): Promise<Pick<User, 'email' | 'id' | 'name'>> {
-  return new Promise((resolve, reject) => {
-    if (email && password && name) {
-      resolve({
-        id: String(Math.random()),
-        name,
-        email,
-      });
+}): Promise<User> {
+  return request(
+    config.baseApiUrl,
+    gql`
+      mutation CreateUser($name: String!, $email: String!, $password: String!) {
+        user {
+          id
+          name
+          email
+          roles
+        }
+      }
+    `,
+    {
+      name,
+      email,
+      password,
     }
-
-    reject(new Error('Could not create this account'));
-  });
-}
-
-export async function logout(): Promise<void> {
-  Storage.clear();
-  api.interceptors.request.use((config) => {
-    return {
-      ...config,
-      headers: {
-        ...config.headers,
-        authorization: undefined,
-      },
-    };
-  });
+  );
 }
