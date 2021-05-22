@@ -1,4 +1,5 @@
 import { request, gql } from 'graphql-request';
+import { OpenReservation, PaginationAndFiltering, PaginationAndFilteringOutput } from 'mocks/handlers';
 import { config } from '../config/config';
 import { Bike } from '../types/bike.type';
 import { User } from '../types/user.type';
@@ -29,5 +30,39 @@ export function getAllReservations(): Promise<{ reservations: Reservation[] }> {
         }
       }
     `
+  );
+}
+
+export function getOpenReservations({
+  perPage,
+  page,
+  filters,
+}: Pick<PaginationAndFiltering, 'perPage' | 'page' | 'filters'>): Promise<{
+  openReservations: PaginationAndFilteringOutput<OpenReservation>;
+}> {
+  return request(
+    config.baseApiUrl,
+    gql`
+      query OpenReservations {
+        openReservations {
+          bike {
+            id
+            model
+            color
+            location
+          }
+          ratingAverage
+          availablePeriods {
+            from
+            to
+          }
+        }
+      }
+    `,
+    {
+      perPage,
+      page,
+      filters,
+    }
   );
 }

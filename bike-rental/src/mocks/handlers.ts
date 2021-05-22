@@ -57,7 +57,7 @@ const BIKES = [
   },
 ];
 
-interface OpenReservation {
+export interface OpenReservation {
   bike: Bike;
   ratingAverage: Rating['rating'];
   availablePeriods: { from: string; to: string }[];
@@ -71,7 +71,26 @@ const OPEN_RESERVATIONS = [
       color: 'blue',
       location: 'san diego, sf, usa',
     },
-    rating: 2,
+    ratingAverage: 2,
+    availablePeriods: [
+      {
+        from: '2021-05-21',
+        to: '2021-05-22',
+      },
+      {
+        from: '2021-05-22',
+        to: '',
+      },
+    ],
+  },
+  {
+    bike: {
+      id: '2',
+      model: 'vv-p4',
+      color: 'red',
+      location: 'san rafael, sf, usa',
+    },
+    ratingAverage: 5,
     availablePeriods: [
       {
         from: '2021-05-21',
@@ -180,9 +199,8 @@ export const handlers = [
     );
   }),
   graphql.query('OpenReservations', (req, res, ctx) => {
-    const { perPage, page, filters } = req.variables;
+    const { perPage, page, filters = {} } = req.variables;
     const openReservations = Storage.getItem<Record<string, string>[]>('openReservations');
-
     return res(
       ctx.data({
         openReservations: withPaginationAndFiltering({
@@ -204,28 +222,39 @@ export const handlers = [
   }),
 ];
 
-function withPaginationAndFiltering({
-  filters,
-  perPage,
-  page,
-  results,
-}: {
+export interface PaginationAndFiltering {
   filters: { [key: string]: string };
   perPage: number;
   page: number;
   results: Record<string, string>[];
-}) {
+}
+
+export interface PaginationAndFilteringOutput<T> extends Omit<PaginationAndFiltering, 'filters' | 'results'> {
+  totalPages: number;
+  totalResults: number;
+  results: T[];
+}
+
+function withPaginationAndFiltering({ filters, perPage, page, results }: PaginationAndFiltering) {
+  const totalResultsLength = results.length;
+  const totalPages = totalResultsLength / perPage;
   const paginatedResults = results.slice(page - 1, perPage);
   const filteredResults = withFilters({ filters, results: paginatedResults });
   return {
     perPage,
     page,
     results: filteredResults,
+    totalPages,
+    totalResults: totalResultsLength,
   };
 }
 
-function withFilters({ filters, results }: { filters: { [key: string]: string }; results: Record<string, string>[] }) {
+function withFilters({ filters, results }: Pick<PaginationAndFiltering, 'filters' | 'results'>) {
   const filteredResults = results.filter((result) => {
+    if (!Object.keys(filters).length) {
+      return true;
+    }
+
     return Object.entries(filters).some(([filterKey, filterValue]) => result[filterKey] === filterValue);
   });
 
