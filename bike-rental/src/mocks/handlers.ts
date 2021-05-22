@@ -144,7 +144,9 @@ export const handlers = [
     );
   }),
   graphql.mutation('EditUser', (req, res, ctx) => {
-    const { user } = req.variables as { user: Pick<User, 'id' | 'email' | 'name'> & { roles: string } };
+    const { user } = req.variables as {
+      user: Pick<User, 'id' | 'email' | 'name'> & { roles: string };
+    };
     const users = Storage.getItem<User[]>('users');
     const newUsers = users.map((_user) => {
       if (_user.id === user.id) {
@@ -178,10 +180,17 @@ export const handlers = [
     );
   }),
   graphql.query('OpenReservations', (req, res, ctx) => {
-    const openReservations = Storage.getItem<OpenReservation[]>('openReservations');
+    const { perPage, page, filters } = req.variables;
+    const openReservations = Storage.getItem<Record<string, string>[]>('openReservations');
+
     return res(
       ctx.data({
-        openReservations,
+        openReservations: withPaginationAndFiltering({
+          perPage,
+          page,
+          filters,
+          results: openReservations,
+        }),
       })
     );
   }),
@@ -194,3 +203,31 @@ export const handlers = [
     );
   }),
 ];
+
+function withPaginationAndFiltering({
+  filters,
+  perPage,
+  page,
+  results,
+}: {
+  filters: { [key: string]: string };
+  perPage: number;
+  page: number;
+  results: Record<string, string>[];
+}) {
+  const paginatedResults = results.slice(page - 1, perPage);
+  const filteredResults = withFilters({ filters, results: paginatedResults });
+  return {
+    perPage,
+    page,
+    results: filteredResults,
+  };
+}
+
+function withFilters({ filters, results }: { filters: { [key: string]: string }; results: Record<string, string>[] }) {
+  const filteredResults = results.filter((result) => {
+    return Object.entries(filters).some(([filterKey, filterValue]) => result[filterKey] === filterValue);
+  });
+
+  return filteredResults;
+}

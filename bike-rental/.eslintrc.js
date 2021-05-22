@@ -9,7 +9,6 @@ module.exports = {
     'plugin:array-func/all',
     'plugin:json/recommended',
     'plugin:promise/recommended',
-    'plugin:security/recommended',
     'eslint:recommended',
     'plugin:@typescript-eslint/eslint-recommended',
     'plugin:@typescript-eslint/recommended',
