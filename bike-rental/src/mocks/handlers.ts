@@ -1,4 +1,5 @@
 import { graphql } from 'msw';
+import get from 'lodash/get';
 import * as Storage from 'utils/storage.util';
 import { User } from 'types/user.type';
 import { Bike } from 'types/bike.type';
@@ -67,7 +68,7 @@ const OPEN_RESERVATIONS = [
   {
     bike: {
       id: '1',
-      model: '55-p4',
+      model: 'fiat',
       color: 'blue',
       location: 'san diego, sf, usa',
     },
@@ -86,7 +87,26 @@ const OPEN_RESERVATIONS = [
   {
     bike: {
       id: '2',
-      model: 'vv-p4',
+      model: 'bmw',
+      color: 'red',
+      location: 'san rafael, sf, usa',
+    },
+    ratingAverage: 5,
+    availablePeriods: [
+      {
+        from: '2021-05-21',
+        to: '2021-05-22',
+      },
+      {
+        from: '2021-05-22',
+        to: '',
+      },
+    ],
+  },
+  {
+    bike: {
+      id: '3',
+      model: 'honda',
       color: 'red',
       location: 'san rafael, sf, usa',
     },
@@ -199,7 +219,8 @@ export const handlers = [
     );
   }),
   graphql.query('OpenReservations', (req, res, ctx) => {
-    const { perPage, page, filters = {} } = req.variables;
+    const { perPage, page, filters } = req.variables;
+    console.log({ perPage, page, filters });
     const openReservations = Storage.getItem<Record<string, string>[]>('openReservations');
     return res(
       ctx.data({
@@ -237,9 +258,12 @@ export interface PaginationAndFilteringOutput<T> extends Omit<PaginationAndFilte
 
 function withPaginationAndFiltering({ filters, perPage, page, results }: PaginationAndFiltering) {
   const totalResultsLength = results.length;
-  const totalPages = totalResultsLength / perPage;
-  const paginatedResults = results.slice(page - 1, perPage);
+  const totalPages = Math.ceil(totalResultsLength / perPage);
+  const pageIndex = page === 1 ? page - 1 : page;
+  const endIndex = page === 1 ? perPage : pageIndex + perPage;
+  const paginatedResults = results.slice(pageIndex, endIndex);
   const filteredResults = withFilters({ filters, results: paginatedResults });
+  console.log({ filters, filteredResults, results });
   return {
     perPage,
     page,
@@ -255,7 +279,11 @@ function withFilters({ filters, results }: Pick<PaginationAndFiltering, 'filters
       return true;
     }
 
-    return Object.entries(filters).some(([filterKey, filterValue]) => result[filterKey] === filterValue);
+    return Object.entries(filters).some(([filterKey, filterValue]) => {
+      console.log({ filterKey, filterValue }, get(result, filterKey), get(result, filterKey).includes(filterValue));
+
+      return get(result, filterKey).includes(filterValue);
+    });
   });
 
   return filteredResults;
