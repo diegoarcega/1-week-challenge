@@ -1,6 +1,8 @@
 import { graphql } from 'msw';
 import * as Storage from 'utils/storage.util';
 import { User } from 'types/user.type';
+import { Bike } from 'types/bike.type';
+import { Rating } from 'types/rating.type';
 
 const USERS = [
   {
@@ -55,7 +57,59 @@ const BIKES = [
   },
 ];
 
+interface OpenReservation {
+  bike: Bike;
+  ratingAverage: Rating['rating'];
+  availablePeriods: { from: string; to: string }[];
+}
+
+const OPEN_RESERVATIONS = [
+  {
+    bike: {
+      id: '1',
+      model: '55-p4',
+      color: 'blue',
+      location: 'san diego, sf, usa',
+    },
+    rating: 2,
+    availablePeriods: [
+      {
+        from: '2021-05-21',
+        to: '2021-05-22',
+      },
+      {
+        from: '2021-05-22',
+        to: '',
+      },
+    ],
+  },
+];
+
+interface MyReservation {
+  id: string;
+  bike: Bike;
+  periodOfTime: { from: string; to: string }[];
+}
+
+const MY_RESERVATIONS = [
+  {
+    id: '1',
+    bike: {
+      id: '2',
+      model: '54-p4',
+      color: 'yellow',
+      location: 'san raphael, sf, usa',
+    },
+    periodOfTime: {
+      from: '2021-05-21',
+      to: '2021-05-23',
+    },
+  },
+];
+
 Storage.setItem('users', USERS);
+Storage.setItem('openReservations', OPEN_RESERVATIONS);
+Storage.setItem('myReservations', MY_RESERVATIONS);
 
 export const handlers = [
   graphql.query('GetUsers', (req, res, ctx) => {
@@ -93,7 +147,6 @@ export const handlers = [
     const { user } = req.variables as { user: Pick<User, 'id' | 'email' | 'name'> & { roles: string } };
     const users = Storage.getItem<User[]>('users');
     const newUsers = users.map((_user) => {
-      console.log({ _user, user });
       if (_user.id === user.id) {
         return {
           ...user,
@@ -121,6 +174,22 @@ export const handlers = [
     return res(
       ctx.data({
         reservations: RESERVATIONS,
+      })
+    );
+  }),
+  graphql.query('OpenReservations', (req, res, ctx) => {
+    const openReservations = Storage.getItem<OpenReservation[]>('openReservations');
+    return res(
+      ctx.data({
+        openReservations,
+      })
+    );
+  }),
+  graphql.query('MyReservations', (req, res, ctx) => {
+    const myReservations = Storage.getItem<MyReservation[]>('myReservations');
+    return res(
+      ctx.data({
+        myReservations,
       })
     );
   }),
