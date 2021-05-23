@@ -10,7 +10,7 @@ interface Reservations extends Pick<Reservation, 'id' | 'periodOfTime' | 'status
 const COLUMNS = ['bike', 'period of time', 'action'];
 const RESERVATIONS: Reservations[] = [
   {
-    id: 1,
+    id: '1',
     bike: {
       id: 1,
       model: '55-p4',

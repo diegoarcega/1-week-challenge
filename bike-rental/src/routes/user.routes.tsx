@@ -3,7 +3,7 @@ import React from 'react';
 import { Route, RouteComponentProps, Switch } from 'react-router-dom';
 import Navigation, { NavItem } from '../container/navigation.container';
 import { MyReservationsPage } from '../pages/user/my-reservations';
-import { OpenReservationsPage } from '../pages/user/open-reservations';
+import { OpenReservationsPage } from '../pages/user/open-reservations/open-reservations';
 
 const NAV_ITEMS: NavItem[] = [
   {

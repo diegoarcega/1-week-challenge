@@ -6,7 +6,10 @@ import * as Storage from 'utils/storage.util';
 import { User } from 'types/user.type';
 import { Bike } from 'types/bike.type';
 import { Rating } from 'types/rating.type';
+import { Reservation } from 'types/reservation.type';
+
 import { OPEN_RESERVATIONS } from './open-reservations.mock.data';
+import { ALL_RESERVATIONS } from './all-reservations.mock.data';
 
 const JWT_SECRET = 'Shhh';
 
@@ -42,36 +45,15 @@ const USERS = [
     id: '1',
     name: 'Diego Manager',
     email: 'diego.manager@gmail.com',
-    password: '12345678',
+    password: '11111111',
     roles: ['manager'],
   },
   {
     id: '2',
     name: 'Diego Normal',
     email: 'diego.normal@gmail.com',
-    password: '87654321',
+    password: '11111111',
     roles: [],
-  },
-];
-
-const RESERVATIONS = [
-  {
-    id: '1',
-    user: 'Diego',
-    bike: '55-4',
-    periodOfTime: {
-      startTime: '2021-05-20',
-      endTime: '2021-05-21',
-    },
-  },
-  {
-    id: '2',
-    user: 'Carina',
-    bike: '55gg-4',
-    periodOfTime: {
-      startTime: '2021-05-21',
-      endTime: '2021-05-22',
-    },
   },
 ];
 
@@ -99,7 +81,7 @@ export interface OpenReservation {
 interface MyReservation {
   id: string;
   bike: Bike;
-  periodOfTime: { from: string; to: string }[];
+  periodOfTime: { from: string; to: string };
 }
 
 const MY_RESERVATIONS = [
@@ -118,10 +100,25 @@ const MY_RESERVATIONS = [
   },
 ];
 
-Storage.setItem('users', USERS);
-Storage.setItem('openReservations', OPEN_RESERVATIONS);
-Storage.setItem('myReservations', MY_RESERVATIONS);
-Storage.setItem('authTokens', []);
+const AUTH_TOKENS_DATABASE_KEY = 'auth-tokens'; // used to check if they exist (dont need it anymore bc of JWT)
+const USERS_DATABASE_KEY = 'users'; // id, name, email, password, roles
+const BIKES_DATABASE_KEY = 'bikes'; // id, mode, color, location
+const RATINGS_DATABASE_KEY = 'ratings'; // id, userId, bikeId, rating
+const ALL_RESERVATIONS_DATABASE_KEY = 'all-reservations'; // id, userId, bikeId, periodOfTime // created by the user
+const OPEN_RESERVATIONS_COMBINATION = 'open-reservations'; // bikeId, rating, periodOfTime - fetch all BIKES_DATABASE_KEY
+// combine with RATINGS_DATABASE_KEY getting its avg, combine it with ALL_RESERVATIONS_DATABASE_KEY ang get the dates the bikes are busy
+const MY_RESERVATIONS_COMBINATION = 'my-reservations'; // fetch all ALL_RESERVATIONS_DATABASE_KEY with a userId
+// and combine it with BIKES_DATABASE_KEY and RATINGS_DATABASE_KEY; returns { bike model, periodOfTime, rating }
+
+Storage.setItem(USERS_DATABASE_KEY, USERS);
+Storage.setItem(BIKES_DATABASE_KEY, []);
+Storage.setItem(RATINGS_DATABASE_KEY, []);
+Storage.setItem(ALL_RESERVATIONS_DATABASE_KEY, ALL_RESERVATIONS);
+
+Storage.setItem(OPEN_RESERVATIONS_COMBINATION, OPEN_RESERVATIONS);
+Storage.setItem(MY_RESERVATIONS_COMBINATION, MY_RESERVATIONS);
+
+Storage.setItem(AUTH_TOKENS_DATABASE_KEY, []);
 
 export const handlers = [
   graphql.query('GetUsers', (req, res, ctx) => {
@@ -136,7 +133,7 @@ export const handlers = [
         ])
       );
     }
-    const users = Storage.getItem<User[]>('users');
+    const users = Storage.getItem<User[]>(USERS_DATABASE_KEY);
 
     return res(
       ctx.data({
@@ -157,7 +154,7 @@ export const handlers = [
       );
     }
     const { userId } = req.variables;
-    const users = Storage.getItem<User[]>('users');
+    const users = Storage.getItem<User[]>(USERS_DATABASE_KEY);
 
     return res(
       ctx.data({
@@ -178,9 +175,11 @@ export const handlers = [
       );
     }
     const { userId } = req.variables;
-    const users = Storage.getItem<User[]>('users');
+    const users = Storage.getItem<User[]>(USERS_DATABASE_KEY);
+
     const newUsers = users.filter((user) => user.id !== userId);
-    Storage.setItem('users', newUsers);
+
+    Storage.setItem(USERS_DATABASE_KEY, newUsers);
 
     return res(
       ctx.data({
@@ -204,7 +203,7 @@ export const handlers = [
       password: string;
       roles?: string;
     };
-    const users = Storage.getItem<UserDatabase[]>('users');
+    const users = Storage.getItem<UserDatabase[]>(USERS_DATABASE_KEY);
     const userAlreadyExists = users.find((u) => u.email === email);
 
     if (userAlreadyExists) {
@@ -224,7 +223,7 @@ export const handlers = [
       id: uuid(),
     };
 
-    Storage.setItem('users', users.concat({ ...newUser, password }));
+    Storage.setItem(USERS_DATABASE_KEY, users.concat({ ...newUser, password }));
 
     return res(
       ctx.data({
@@ -247,7 +246,7 @@ export const handlers = [
     const { user } = req.variables as {
       user: Pick<User, 'id' | 'email' | 'name'> & { roles: string };
     };
-    const users = Storage.getItem<User[]>('users');
+    const users = Storage.getItem<User[]>(USERS_DATABASE_KEY);
     const newUsers = users.map((_user) => {
       if (_user.id === user.id) {
         return {
@@ -259,7 +258,7 @@ export const handlers = [
       return _user;
     });
 
-    Storage.setItem('users', newUsers);
+    Storage.setItem(USERS_DATABASE_KEY, newUsers);
     return res(
       ctx.data({
         user,
@@ -279,7 +278,7 @@ export const handlers = [
       );
     }
     const { email, password } = req.variables as Pick<User, 'email'> & { password: string };
-    const users = Storage.getItem<UserDatabase[]>('users');
+    const users = Storage.getItem<UserDatabase[]>(USERS_DATABASE_KEY);
     const foundUser = users.find((u) => u.email === email && u.password === password);
 
     if (!foundUser) {
@@ -293,14 +292,15 @@ export const handlers = [
     }
 
     const authToken = createJwtToken(foundUser);
-    const authTokens: AuthTokensDatabase[] = Storage.getItem('authTokens');
+    const authTokens: AuthTokensDatabase[] = Storage.getItem(AUTH_TOKENS_DATABASE_KEY);
     Storage.setItem(
-      'authTokens',
+      AUTH_TOKENS_DATABASE_KEY,
       authTokens.concat({
         [authToken]: foundUser,
       })
     );
 
+    // TODO: send only the token and decode it in FE
     return res(
       ctx.data({
         token: authToken,
@@ -338,9 +338,11 @@ export const handlers = [
         ])
       );
     }
+
+    const allReservations = Storage.getItem<Record<string, string>[]>(ALL_RESERVATIONS_DATABASE_KEY);
     return res(
       ctx.data({
-        reservations: RESERVATIONS,
+        reservations: allReservations,
       })
     );
   }),
@@ -358,7 +360,7 @@ export const handlers = [
     }
     const { perPage, page, filters } = req.variables;
 
-    const openReservations = Storage.getItem<Record<string, string>[]>('openReservations');
+    const openReservations = Storage.getItem<Record<string, string>[]>(OPEN_RESERVATIONS_COMBINATION);
     return res(
       ctx.data({
         openReservations: withPaginationAndFiltering({
@@ -382,10 +384,45 @@ export const handlers = [
         ])
       );
     }
-    const myReservations = Storage.getItem<MyReservation[]>('myReservations');
+    const { userId } = req.variables;
+
+    const myReservations = Storage.getItem<MyReservation[]>(MY_RESERVATIONS_COMBINATION);
+
     return res(
       ctx.data({
         myReservations,
+      })
+    );
+  }),
+  graphql.mutation('Reserve', (req, res, ctx) => {
+    const { userId, bikeId, periodOfTime } = req.variables;
+    try {
+      hasAuthTokenExpired(req);
+    } catch {
+      return res(
+        ctx.errors([
+          {
+            message: 'Session has expired',
+          },
+        ])
+      );
+    }
+
+    const newReservation: Reservation = {
+      id: uuid(),
+      userId,
+      bikeId,
+      periodOfTime,
+      status: 'active',
+    };
+
+    const allReservations = Storage.getItem<Reservation[]>(ALL_RESERVATIONS_DATABASE_KEY);
+    allReservations.push(newReservation);
+    Storage.setItem(ALL_RESERVATIONS_DATABASE_KEY, allReservations);
+
+    return res(
+      ctx.data({
+        newReservation,
       })
     );
   }),

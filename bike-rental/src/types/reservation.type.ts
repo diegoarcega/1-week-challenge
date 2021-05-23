@@ -2,12 +2,12 @@ import { Bike } from './bike.type';
 import { User } from './user.type';
 
 export interface Reservation {
-  id: number;
-  user: User['id'];
-  bike: Bike['id'];
+  id: string;
+  userId: User['id'];
+  bikeId: Bike['id'];
   periodOfTime: {
-    startTime: string;
-    endTime: string;
+    from: string;
+    to: string;
   };
   status: 'active' | 'cancelled';
 }

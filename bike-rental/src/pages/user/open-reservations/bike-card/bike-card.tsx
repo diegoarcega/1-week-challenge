@@ -1,18 +1,6 @@
 /* eslint-disable react/no-array-index-key */
 import React from 'react';
-import {
-  Flex,
-  Circle,
-  Box,
-  Image,
-  Badge,
-  useColorModeValue,
-  Icon,
-  chakra,
-  Tooltip,
-  Text,
-  Button,
-} from '@chakra-ui/react';
+import { Flex, Circle, Box, Image, Badge, useColorModeValue, Text, Button } from '@chakra-ui/react';
 import { BsStar, BsStarFill, BsStarHalf } from 'react-icons/bs';
 import { FiShoppingCart } from 'react-icons/fi';
 import { Bike } from 'types/bike.type';
@@ -20,8 +8,7 @@ import { Rating } from 'types/rating.type';
 
 const data = {
   isNew: true,
-  imageURL:
-    'https://images.unsplash.com/photo-1572635196237-14b3f281503f?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=4600&q=80',
+  imageURL: 'https://media.zigcdn.com/media/model/2021/Feb/right-side-view-1977503713_930x620.jpg',
   name: 'Wayfarer Classic',
   price: 4.5,
   rating: 4.2,
@@ -55,9 +42,11 @@ function RatingComponent({ rating, numReviews }: RatingProps) {
   );
 }
 
-type BikeCardProps = Omit<Bike, 'id'>;
+interface BikeCardProps extends Omit<Bike, 'id'> {
+  onReserve: () => void;
+}
 
-function BikeCard({ model, color, location }: BikeCardProps): JSX.Element {
+function BikeCard({ model, color, location, onReserve }: BikeCardProps): JSX.Element {
   return (
     <Flex alignItems="center" justifyContent="center">
       <Box
@@ -85,9 +74,11 @@ function BikeCard({ model, color, location }: BikeCardProps): JSX.Element {
             {color} {model}
           </Box>
 
-          <Text mb="5">{location}</Text>
+          <Text mb="5" as="address">
+            {location}
+          </Text>
           <RatingComponent rating={data.rating} numReviews={data.numReviews} />
-          <Button colorScheme="green" w="full" mt="5">
+          <Button colorScheme="blue" w="full" mt="5" onClick={onReserve}>
             Reserve now!
           </Button>
         </Box>

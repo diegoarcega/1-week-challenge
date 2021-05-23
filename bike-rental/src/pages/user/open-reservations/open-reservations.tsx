@@ -1,70 +1,38 @@
-import React, { EventHandler, FormEventHandler, useRef } from 'react';
+import React, { useRef } from 'react';
 import {
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
+  // Table,
+  // Thead,
+  // Tbody,
+  // Tr,
+  // Th,
+  // Td,
+  Drawer,
+  DrawerBody,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerCloseButton,
+  useDisclosure,
   Button,
   ButtonGroup,
   Flex,
   FormControl,
-  FormLabel,
   Select,
   Input,
-  VStack,
-  HStack,
   InputGroup,
   InputLeftAddon,
   Box,
-  InputRightAddon,
   SimpleGrid,
+  Text,
+  FormLabel,
+  VStack,
 } from '@chakra-ui/react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { Bike } from 'types/bike.type';
-import { getOpenReservations } from 'services/reservation.service';
+import { getOpenReservations, reserve, ReserveInput } from 'services/reservation.service';
 import { OpenReservation, PaginationAndFilteringOutput } from 'mocks/handlers';
-import { BikeCard } from 'components/bike-card/bike-card';
-
-const COLUMNS = ['bike', 'availability', 'rating', 'action'];
-
-interface DataTableProps {
-  columns: string[];
-  data: (OpenReservation & {
-    onReserveBike: () => void;
-  })[];
-}
-// TODO: make it responsive
-function DataTable({ columns, data }: DataTableProps) {
-  return (
-    <Table variant="simple" bg="white">
-      <Thead>
-        <Tr>
-          {columns.map((column) => (
-            <Th key={column}>{column}</Th>
-          ))}
-        </Tr>
-      </Thead>
-      <Tbody>
-        {data.map((d) => (
-          <Tr key={d.bike.id}>
-            <Td>{d.bike.model}</Td>
-            <Td>{JSON.stringify(d.availablePeriods, null, 2)}</Td>
-
-            <Td>{d.ratingAverage}</Td>
-
-            <Td>
-              <Button variant="solid" onClick={d.onReserveBike} size="sm">
-                reserve
-              </Button>
-            </Td>
-          </Tr>
-        ))}
-      </Tbody>
-    </Table>
-  );
-}
+import { BikeCard } from 'pages/user/open-reservations/bike-card/bike-card';
+import { getUser } from 'utils/user';
 
 // TODO: DONT NEED TO BE LOGGED IN
 interface QueryParams {
@@ -76,7 +44,10 @@ export const OpenReservationsPage = (): JSX.Element | null => {
   const [page, setPage] = React.useState(1);
   const selectRef = useRef<HTMLSelectElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const selectedOpenReservation = useRef<OpenReservation | null>(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
   const queryClient = useQueryClient();
+
   const queryParamsRef = useRef({
     perPage: 12,
     filters: {},
@@ -92,6 +63,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
       return getOpenReservations(queryParams);
     }
   );
+
   const { mutate, isLoading: isSearching } = useMutation(
     (queryParamsVariable: QueryParams) => {
       return getOpenReservations(queryParamsVariable);
@@ -108,7 +80,25 @@ export const OpenReservationsPage = (): JSX.Element | null => {
     }
   );
 
-  // console.log({ data, error, isLoading });
+  const { mutate: reserveMutatation, isLoading: isReserving } = useMutation((variables: ReserveInput) => {
+    return reserve(variables);
+  });
+
+  function handleReserve() {
+    const bikeId = selectedOpenReservation.current?.bike.id;
+    if (!bikeId) return;
+
+    reserveMutatation({
+      userId: getUser().id,
+      bikeId,
+      periodOfTime: {
+        from: '1',
+        to: '2',
+      },
+    });
+
+    onClose();
+  }
 
   function handleSearch(event: React.FormEvent) {
     event.preventDefault();
@@ -123,13 +113,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
         [filterKey]: filterValue,
       };
     }
-
-    console.log({ query });
     mutate(query);
-  }
-
-  function handleSearchByChange() {
-    console.log({ inputRef, selectRef });
   }
 
   function handlePrevious() {
@@ -140,16 +124,15 @@ export const OpenReservationsPage = (): JSX.Element | null => {
     setPage((_page) => _page + 1);
   }
 
-  function handleReserveBike(bikeId: Bike['id']) {
-    // eslint-disable-next-line no-alert
-    window.alert(JSON.stringify({ bikeId, userId: 1 }, null, 2));
-  }
-
   let openReservations = null;
   if (data) {
     openReservations = data?.openReservations.results.map((reservation) => ({
       ...reservation,
-      onReserveBike: () => handleReserveBike(reservation.bike.id),
+      onReserveBike: () => {
+        selectedOpenReservation.current = reservation;
+        console.log(JSON.stringify(selectedOpenReservation.current, null, 2));
+        onOpen();
+      },
     }));
   }
 
@@ -158,6 +141,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
   }
 
   const totalPages = data ? data.openReservations.totalPages : 1;
+  const selectedReservation = selectedOpenReservation?.current;
   return (
     <Box pb="20">
       <Box bg="white" p="5">
@@ -229,12 +213,13 @@ export const OpenReservationsPage = (): JSX.Element | null => {
             model={reservation.bike.model}
             color={reservation.bike.color}
             location={reservation.bike.location}
+            onReserve={reservation.onReserveBike}
           />
         ))}
       </SimpleGrid>
       {/* <DataTable data={openReservations} columns={COLUMNS} /> */}
       <Flex justifyContent={{ base: 'center', sm: 'flex-end' }} mt="5" w="full">
-        <ButtonGroup variant="outline" colorScheme="green" w={['full', 'xs']}>
+        <ButtonGroup variant="outline" colorScheme="blue" w={['full', 'xs']}>
           <Button onClick={handlePrevious} isDisabled={page === 1} w={['full']}>
             Previous
           </Button>
@@ -243,6 +228,42 @@ export const OpenReservationsPage = (): JSX.Element | null => {
           </Button>
         </ButtonGroup>
       </Flex>
+      {selectedReservation && (
+        <Drawer isOpen={isOpen} placement="right" size="sm" onClose={onClose}>
+          <DrawerOverlay />
+          <DrawerContent>
+            <DrawerCloseButton />
+            <DrawerHeader>
+              Reserve the {selectedReservation.bike.color} {selectedReservation.bike.model}
+            </DrawerHeader>
+
+            <DrawerBody>
+              <Text as="address">{selectedReservation.bike.location}</Text>
+              <Text>{selectedReservation.ratingAverage}</Text>
+
+              <VStack mt="10" spacing="5">
+                <FormControl id="selectedFrom">
+                  <FormLabel>From</FormLabel>
+                  <Input ref={inputRef} type="date" />
+                </FormControl>
+                <FormControl id="selectedTo">
+                  <FormLabel>To</FormLabel>
+                  <Input ref={inputRef} type="date" />
+                </FormControl>
+              </VStack>
+            </DrawerBody>
+
+            <DrawerFooter>
+              <Button variant="outline" mr={3} onClick={onClose}>
+                Cancel
+              </Button>
+              <Button colorScheme="blue" onClick={handleReserve} isLoading={isReserving}>
+                Reserve
+              </Button>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+      )}
     </Box>
   );
 };
