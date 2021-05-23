@@ -7,6 +7,7 @@ import { UserDetailPage } from 'pages/manager/manage/users/user-detail';
 import { BikesListPage } from 'pages/manager/manage/bikes/bikes-list';
 import { ReservationsPage } from 'pages/manager/reservations/reservations';
 import { UserCreatePage } from 'pages/manager/manage/users/user-create';
+import { BikeCreatePage } from 'pages/manager/manage/bikes/bike.create';
 
 const NAV_ITEMS: NavItem[] = [
   {
@@ -50,6 +51,10 @@ const ManagerRoutes = ({ match }: RouteComponentProps): JSX.Element => {
 
           <Route path={`${match.path}/manage/bikes`} exact>
             <BikesListPage />
+          </Route>
+
+          <Route path={`${match.path}/manage/bikes/create`} exact>
+            <BikeCreatePage />
           </Route>
 
           <Route path={`${match.path}/reservations`}>

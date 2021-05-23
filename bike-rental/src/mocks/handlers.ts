@@ -333,6 +333,50 @@ export const handlers = [
       })
     );
   }),
+  graphql.mutation('CreateBike', (req, res, ctx) => {
+    try {
+      hasAuthTokenExpired(req);
+    } catch {
+      return res(
+        ctx.errors([
+          {
+            message: 'Session has expired',
+          },
+        ])
+      );
+    }
+    const { model, color, location } = req.variables as Pick<Bike, 'model' | 'color' | 'location'>;
+
+    const allBikes = Storage.getItem<Bike[]>(BIKES_DATABASE_KEY);
+    const bikeAlreadyExists = allBikes.find(
+      (bike) => bike.model === model && bike.color === color && bike.location === location
+    );
+
+    if (bikeAlreadyExists) {
+      return res(
+        ctx.errors([
+          {
+            message: 'Bike already exists',
+          },
+        ])
+      );
+    }
+
+    const newBike = {
+      model,
+      color,
+      location,
+      id: uuid(),
+    };
+
+    Storage.setItem(BIKES_DATABASE_KEY, allBikes.concat(newBike));
+
+    return res(
+      ctx.data({
+        bike: newBike,
+      })
+    );
+  }),
   graphql.query('GetAllReservations', (req, res, ctx) => {
     try {
       hasAuthTokenExpired(req);

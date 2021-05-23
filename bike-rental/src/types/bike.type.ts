@@ -1,5 +1,5 @@
 export interface Bike {
-  id: number;
+  id: string;
   model: string;
   color: string;
   location: string;

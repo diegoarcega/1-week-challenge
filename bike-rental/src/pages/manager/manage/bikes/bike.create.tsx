@@ -11,21 +11,21 @@ import { CardHeader } from 'components/card/card.header';
 import { CardContent } from 'components/card/card.content';
 import { Property } from 'components/card/card.property';
 import { Input } from 'components/input/input';
-import { CreateAccount, createAccount } from 'services/auth.service';
+import { CreateBikeInput, createBike } from 'services/bike.service';
 import createRequiredSchema from 'validations/required';
-import emailSchema from 'validations/email';
-import passwordSchema from 'validations/password';
 import { GraphQLError } from 'types/error.type';
-import { User } from 'types/user.type';
+import { getUser } from 'utils/user';
+import { Bike } from 'types/bike.type';
 
-const cacheKey = ['users'];
+const cacheKey = ['bikes', getUser().id];
+
 const schema = yup.object().shape({
-  name: createRequiredSchema('name'),
-  email: emailSchema,
-  password: passwordSchema,
+  model: createRequiredSchema('model'),
+  color: createRequiredSchema('color'),
+  location: createRequiredSchema('location'),
 });
 
-export const UserCreatePage = (): JSX.Element => {
+export const BikeCreatePage = (): JSX.Element => {
   const queryClient = useQueryClient();
   const history = useHistory();
   const toast = useToast();
@@ -35,15 +35,15 @@ export const UserCreatePage = (): JSX.Element => {
     error: mutationError,
     data,
   } = useMutation(
-    ({ user }: { user: CreateAccount }) => {
-      return createAccount(user);
+    ({ bike }: { bike: CreateBikeInput }) => {
+      return createBike(bike);
     },
     {
       onSuccess: (dataSuccess) => {
-        const usersCached = queryClient.getQueryData<{ users: User[] }>(cacheKey);
-        queryClient.setQueryData<{ users: User[] } | undefined>(cacheKey, () => {
+        const bikesCached = queryClient.getQueryData<{ bikes: Bike[] }>(cacheKey);
+        queryClient.setQueryData<{ bikes: Bike[] } | undefined>(cacheKey, () => {
           return {
-            users: usersCached ? usersCached?.users.concat(dataSuccess.user) : [],
+            bikes: bikesCached ? bikesCached?.bikes.concat(dataSuccess.bike) : [],
           };
         });
       },
@@ -53,10 +53,10 @@ export const UserCreatePage = (): JSX.Element => {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<CreateAccount>({
+  } = useForm<CreateBikeInput>({
     resolver: yupResolver(schema),
   });
-
+  console.log({ data });
   const errorMessage: string | undefined = (mutationError as GraphQLError)?.response?.errors[0].message;
   useEffect(() => {
     if (errorMessage) {
@@ -73,10 +73,10 @@ export const UserCreatePage = (): JSX.Element => {
   }, [errorMessage, toast]);
 
   useEffect(() => {
-    const newUserId: string | undefined = data?.user?.id;
-    if (newUserId) {
+    const newBikeId: string | undefined = data?.bike?.id;
+    if (newBikeId) {
       toast({
-        title: 'User created!',
+        title: 'Bike created!',
         duration: 5000,
         variant: 'top-accent',
         isClosable: true,
@@ -84,17 +84,18 @@ export const UserCreatePage = (): JSX.Element => {
         position: 'bottom-right',
       });
 
-      history.push(`/manager/manage/users/${newUserId}`);
+      history.push(`/manager/manage/bikes/${newBikeId}`);
     }
   }, [data, toast, history]);
 
   function handleBack() {
-    history.push('/manager/manage/users');
+    history.push('/manager/manage/bikes');
   }
 
-  const onSubmit: SubmitHandler<CreateAccount> = (formData) => {
+  const onSubmit: SubmitHandler<CreateBikeInput> = (formData) => {
+    console.log({ formData });
     mutate({
-      user: formData,
+      bike: formData,
     });
   };
 
@@ -107,7 +108,7 @@ export const UserCreatePage = (): JSX.Element => {
             <IconButton
               aria-label="navigate back"
               as={Link}
-              to="/manager/manage/users"
+              to="/manager/manage/bikes"
               variant="outline"
               icon={<IoIosArrowBack />}
               fontSize={{ base: 'xs', md: 'md' }}
@@ -127,17 +128,23 @@ export const UserCreatePage = (): JSX.Element => {
         />
         <CardContent>
           <Property
-            label="Name"
-            value={<Input register={register} name="name" placeholder="John Doe" error={errors?.name?.message} />}
+            label="Model"
+            value={<Input register={register} name="model" placeholder="BMW" error={errors?.model?.message} />}
           />
           <Property
-            label="Email"
-            value={<Input register={register} name="email" placeholder="john@doe.com" error={errors?.email?.message} />}
+            label="Color"
+            value={<Input register={register} name="color" placeholder="red" error={errors?.color?.message} />}
           />
-          <Property label="Roles" value={<Input register={register} name="roles" placeholder="manager, admin" />} />
           <Property
-            label="Password"
-            value={<Input register={register} name="password" error={errors?.password?.message} />}
+            label="Location"
+            value={
+              <Input
+                register={register}
+                name="location"
+                placeholder="55 Marino St, San Diego, CA, USA"
+                error={errors?.location?.message}
+              />
+            }
           />
         </CardContent>
       </Card>
