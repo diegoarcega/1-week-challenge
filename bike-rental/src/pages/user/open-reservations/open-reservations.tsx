@@ -44,6 +44,8 @@ export const OpenReservationsPage = (): JSX.Element | null => {
   const [page, setPage] = React.useState(1);
   const selectRef = useRef<HTMLSelectElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fromRef = useRef<HTMLInputElement>(null);
+  const toRef = useRef<HTMLInputElement>(null);
   const selectedOpenReservation = useRef<OpenReservation | null>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const queryClient = useQueryClient();
@@ -86,14 +88,17 @@ export const OpenReservationsPage = (): JSX.Element | null => {
 
   function handleReserve() {
     const bikeId = selectedOpenReservation.current?.bike.id;
-    if (!bikeId) return;
+    const from = fromRef.current?.value;
+    const to = toRef.current?.value;
+
+    if (!bikeId || !from || !to) return;
 
     reserveMutatation({
       userId: getUser().id,
       bikeId,
       periodOfTime: {
-        from: '1',
-        to: '2',
+        from,
+        to,
       },
     });
 
@@ -244,11 +249,11 @@ export const OpenReservationsPage = (): JSX.Element | null => {
               <VStack mt="10" spacing="5">
                 <FormControl id="selectedFrom">
                   <FormLabel>From</FormLabel>
-                  <Input ref={inputRef} type="date" />
+                  <Input ref={fromRef} type="date" />
                 </FormControl>
                 <FormControl id="selectedTo">
                   <FormLabel>To</FormLabel>
-                  <Input ref={inputRef} type="date" />
+                  <Input ref={toRef} type="date" />
                 </FormControl>
               </VStack>
             </DrawerBody>

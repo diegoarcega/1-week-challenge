@@ -3,28 +3,24 @@ import { OpenReservation, PaginationAndFiltering, PaginationAndFilteringOutput }
 import { config } from 'config/config';
 import { Bike } from 'types/bike.type';
 import { User } from 'types/user.type';
-import { Reservation as ReservationData } from 'types/reservation.type';
+import { Reservation } from 'types/reservation.type';
 import { api } from './api';
 
-export interface Reservation {
-  id: number;
-  user: User['name'];
-  bike: Bike['model'];
-  periodOfTime: {
-    startTime: string;
-    endTime: string;
-  };
+export interface ReservationOutput extends Reservation {
+  user: User;
+  bike: Bike;
 }
 
-export function getAllReservations(): Promise<{ reservations: Reservation[] }> {
+export function getAllReservations(): Promise<{ allReservations: ReservationOutput[] }> {
   return request(
     config.baseApiUrl,
     gql`
       query GetAllReservations {
-        reservations {
+        allReservations {
           id
           user
           bike
+          status
           periodOfTime {
             startTime
             endTime
@@ -69,8 +65,8 @@ export function getOpenReservations({
   );
 }
 
-export type ReserveInput = Omit<ReservationData, 'id' | 'status'>;
-export function reserve({ userId, bikeId, periodOfTime }: ReserveInput): Promise<{ newReservation: ReservationData }> {
+export type ReserveInput = Omit<Reservation, 'id' | 'status'>;
+export function reserve({ userId, bikeId, periodOfTime }: ReserveInput): Promise<{ newReservation: Reservation }> {
   const query = gql`
     type PeriodOfTime {
       from: String!
@@ -78,11 +74,8 @@ export function reserve({ userId, bikeId, periodOfTime }: ReserveInput): Promise
     }
 
     mutation Reserve($userId: String!, $bikeId: String!, $periodOfTime: PeriodOfTime!) {
-      user {
+      reservation {
         id
-        name
-        email
-        roles
       }
     }
   `;
@@ -95,7 +88,7 @@ export function reserve({ userId, bikeId, periodOfTime }: ReserveInput): Promise
   return api({ query, variables });
 }
 
-export function getMyReservations({ userId }: { userId: User['id'] }): Promise<{ myReservations: ReservationData }> {
+export function getMyReservations({ userId }: { userId: User['id'] }): Promise<{ myReservations: Reservation }> {
   const query = gql`
     query MyReservations($userId: String!) {
       myReservations {

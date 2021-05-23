@@ -12,14 +12,14 @@ const RESERVATIONS: Reservations[] = [
   {
     id: '1',
     bike: {
-      id: 1,
+      id: '1',
       model: '55-p4',
       color: 'blue',
       location: 'san diego, sf, usa',
     },
     periodOfTime: {
-      startTime: '2021-05-25',
-      endTime: '2021-05-26',
+      from: '2021-05-25',
+      to: '2021-05-26',
     },
     status: 'active',
   },

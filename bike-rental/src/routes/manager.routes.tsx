@@ -5,7 +5,7 @@ import Navigation, { NavItem } from 'container/navigation.container';
 import { UsersListPage } from 'pages/manager/manage/users/users-list';
 import { UserDetailPage } from 'pages/manager/manage/users/user-detail';
 import { BikesListPage } from 'pages/manager/manage/bikes/bikes-list';
-import { ReservationsPage } from 'pages/manager/reservations/reservations';
+import { ReservationsPage } from 'pages/manager/all-reservations/all-reservations';
 import { UserCreatePage } from 'pages/manager/manage/users/user-create';
 import { BikeCreatePage } from 'pages/manager/manage/bikes/bike.create';
 
@@ -27,7 +27,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     label: 'Reservations',
-    href: '/manager/reservations',
+    href: '/manager/all-reservations',
   },
 ];
 
@@ -57,7 +57,7 @@ const ManagerRoutes = ({ match }: RouteComponentProps): JSX.Element => {
             <BikeCreatePage />
           </Route>
 
-          <Route path={`${match.path}/reservations`}>
+          <Route path={`${match.path}/all-reservations`}>
             <ReservationsPage />
           </Route>
           <Route>

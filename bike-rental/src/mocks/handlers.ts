@@ -390,10 +390,21 @@ export const handlers = [
       );
     }
 
-    const allReservations = Storage.getItem<Record<string, string>[]>(ALL_RESERVATIONS_DATABASE_KEY);
+    const allReservations = Storage.getItem<Reservation[]>(ALL_RESERVATIONS_DATABASE_KEY);
+    const allBikes = Storage.getItem<Reservation[]>(BIKES_DATABASE_KEY);
+    const allUsers = Storage.getItem<Reservation[]>(USERS_DATABASE_KEY);
+
     return res(
       ctx.data({
-        reservations: allReservations,
+        allReservations: allReservations.map((reservation) => {
+          return {
+            id: reservation.id,
+            bike: allBikes.find((bike) => bike.id === reservation.bikeId),
+            user: allUsers.find((user) => user.id === reservation.userId),
+            periodOfTime: reservation.periodOfTime,
+            status: reservation.status,
+          };
+        }),
       })
     );
   }),
