@@ -26,6 +26,7 @@ module.exports = {
     'react/jsx-props-no-spreading': 'off',
     'react/require-default-props': 'off',
     '@typescript-eslint/no-unused-vars': 'warn',
+    '@typescript-eslint/no-unsafe-member-access': 'off',
     // 'no-unneeded-ternary': 'warn',
     // staying, functions are naturally hoisted
     '@typescript-eslint/no-use-before-define': ['error', { functions: false }],

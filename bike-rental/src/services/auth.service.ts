@@ -1,6 +1,7 @@
 import { config } from 'config/config';
 import { gql, request } from 'graphql-request';
 import { User } from '../types/user.type';
+import { api } from './api';
 
 export function login({ email, password }: { email: User['email']; password: string }): Promise<{
   token: string;
@@ -21,31 +22,28 @@ export function login({ email, password }: { email: User['email']; password: str
   );
 }
 
-export function createAccount({
-  name,
-  email,
-  password,
-}: {
-  name: User['name'];
-  email: User['email'];
+export interface CreateAccount extends Pick<User, 'name' | 'email'> {
   password: string;
-}): Promise<User> {
-  return request(
-    config.baseApiUrl,
-    gql`
-      mutation CreateUser($name: String!, $email: String!, $password: String!) {
-        user {
-          id
-          name
-          email
-          roles
-        }
+  roles?: User['roles'];
+}
+export function createAccount({ name, email, password, roles }: CreateAccount): Promise<{ user: User }> {
+  const query = gql`
+    mutation CreateUser($name: String!, $email: String!, $password: String!) {
+      user {
+        id
+        name
+        email
+        roles
       }
-    `,
-    {
-      name,
-      email,
-      password,
     }
-  );
+  `;
+
+  const variables = {
+    name,
+    email,
+    password,
+    roles,
+  };
+
+  return api({ query, variables });
 }

@@ -1,6 +1,6 @@
 import { graphql, GraphQLRequest, GraphQLVariables } from 'msw';
 import get from 'lodash/get';
-import { uuid } from 'uuidv4';
+import { v4 as uuid } from 'uuid';
 import jwt from 'jsonwebtoken';
 import * as Storage from 'utils/storage.util';
 import { User } from 'types/user.type';
@@ -16,8 +16,8 @@ function createJwtToken(user: User): string {
       data: user,
     },
     JWT_SECRET,
-    { expiresIn: '1min' }
-  ) as string;
+    { expiresIn: '30min' }
+  );
 }
 
 function hasAuthTokenExpired(req: GraphQLRequest<GraphQLVariables>) {
@@ -259,7 +259,10 @@ export const handlers = [
         ])
       );
     }
-    const { name, email, password } = req.variables as Pick<User, 'name' | 'email'> & { password: string };
+    const { name, email, password, roles } = req.variables as Pick<User, 'name' | 'email'> & {
+      password: string;
+      roles?: string;
+    };
     const users = Storage.getItem<UserDatabase[]>('users');
     const userAlreadyExists = users.find((u) => u.email === email);
 
@@ -274,7 +277,7 @@ export const handlers = [
     }
 
     const newUser = {
-      roles: [],
+      roles: roles ? roles.replace(' ', '').split(',') : [],
       name,
       email,
       id: uuid(),
@@ -307,6 +310,7 @@ export const handlers = [
     const newUsers = users.map((_user) => {
       if (_user.id === user.id) {
         return {
+          ..._user,
           ...user,
           roles: user.roles.replace(' ', '').split(','),
         };

@@ -1,18 +1,57 @@
 import React from 'react';
 import { useHistory } from 'react-router-dom';
-import { Table, Thead, Tbody, Tr, Th, Td, Text, Flex } from '@chakra-ui/react';
+import { Table, Thead, Tbody, Tr, Th, Td, Text, Flex, Button } from '@chakra-ui/react';
 import { useQuery } from 'react-query';
 import { getAllUsers } from 'services/user.service';
 import { User } from 'types/user.type';
 import { RequestStatus } from 'components/request-status/request-status';
 
-const COLUMNS = ['name', 'email', 'roles'];
 interface DataTableProps {
   columns: string[];
   data: (User & {
     onOpen: () => void;
   })[];
 }
+
+type RequestType = { users: User[] };
+
+const COLUMNS = ['name', 'email', 'roles'];
+const cacheKey = ['users'];
+
+export const UsersListPage = (): JSX.Element => {
+  const history = useHistory();
+  const { data, error, isLoading } = useQuery<RequestType>(cacheKey, getAllUsers);
+
+  function handleCreateUserClick() {
+    history.push(`/manager/manage/users/create`);
+  }
+
+  let usersData = null;
+
+  if (data?.users) {
+    usersData = data.users.map((user) => ({
+      ...user,
+      onOpen: () => history.push(`/manager/manage/users/${user.id}`),
+    }));
+  }
+  return (
+    <>
+      <Flex justifyContent="flex-end" mb="5">
+        <Button colorScheme="blue" onClick={handleCreateUserClick}>
+          Create User
+        </Button>
+      </Flex>
+      <RequestStatus
+        isLoading={isLoading}
+        error={error}
+        data={usersData}
+        noResultsMessage="There are no users in the system"
+      >
+        {usersData ? <DataTable data={usersData} columns={COLUMNS} /> : null}
+      </RequestStatus>
+    </>
+  );
+};
 
 function DataTable({ columns, data }: DataTableProps) {
   return (
@@ -62,31 +101,3 @@ function DataTable({ columns, data }: DataTableProps) {
     </Table>
   );
 }
-
-type RequestType = { users: User[] };
-const cacheKey = ['users'];
-
-export const UsersListPage = (): JSX.Element => {
-  const history = useHistory();
-
-  const { data, error, isLoading } = useQuery<RequestType>(cacheKey, getAllUsers);
-
-  let usersData = null;
-
-  if (data?.users) {
-    usersData = data.users.map((user) => ({
-      ...user,
-      onOpen: () => history.push(`/manager/manage/users/${user.id}`),
-    }));
-  }
-  return (
-    <RequestStatus
-      isLoading={isLoading}
-      error={error}
-      data={usersData}
-      noResultsMessage="There are no users in the system"
-    >
-      {usersData ? <DataTable data={usersData} columns={COLUMNS} /> : null}
-    </RequestStatus>
-  );
-};

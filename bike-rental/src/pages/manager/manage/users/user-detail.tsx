@@ -17,6 +17,9 @@ import {
   VStack,
   Text,
 } from '@chakra-ui/react';
+import * as yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { ErrorMessage } from '@hookform/error-message';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { editUser, getUser, deleteUser } from 'services/user.service';
@@ -27,8 +30,15 @@ import { Property } from 'components/card/card.property';
 import { User } from 'types/user.type';
 import { Input } from 'components/input/input';
 import { RequestStatus } from 'components/request-status/request-status';
+import createRequiredSchema from 'validations/required';
+import emailSchema from 'validations/email';
 
 type FormInput = Pick<User, 'name' | 'email' | 'roles'>;
+
+const schema = yup.object().shape({
+  name: createRequiredSchema('name'),
+  email: emailSchema,
+});
 
 export const UserDetailPage = (): JSX.Element => {
   const [isEdit, setEdit] = useState(false);
@@ -76,7 +86,13 @@ export const UserDetailPage = (): JSX.Element => {
     }
   );
 
-  const { register, handleSubmit } = useForm<FormInput>();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormInput>({
+    resolver: yupResolver(schema),
+  });
 
   useEffect(() => {
     if (mutationError || deleteMutationError) {
@@ -115,7 +131,7 @@ export const UserDetailPage = (): JSX.Element => {
       <Box as="section">
         <Card maxW="3xl" mx="auto" as="form" onSubmit={handleSubmit(onSubmit)}>
           <CardHeader
-            title={data ? data.user.name : ''}
+            title={data ? data.user?.name : ''}
             prefix={
               <IconButton
                 aria-label="navigate back"
@@ -166,13 +182,32 @@ export const UserDetailPage = (): JSX.Element => {
             <Property
               label="Name"
               value={
-                isEdit ? <Input register={register} name="name" defaultValue={data?.user.name} /> : data?.user.name
+                isEdit ? (
+                  <Input
+                    register={register}
+                    name="name"
+                    defaultValue={data?.user?.name}
+                    error={errors?.name?.message}
+                  />
+                ) : (
+                  data?.user?.name
+                )
               }
             />
             <Property
               label="Email"
               value={
-                isEdit ? <Input register={register} name="email" defaultValue={data?.user.email} /> : data?.user.email
+                isEdit ? (
+                  <Input
+                    register={register}
+                    name="email"
+                    defaultValue={data?.user?.email}
+                    error={errors?.email?.message}
+                    isReadOnly
+                  />
+                ) : (
+                  data?.user?.email
+                )
               }
             />
             <Property
@@ -193,7 +228,7 @@ export const UserDetailPage = (): JSX.Element => {
 };
 
 function getUserRoles(data?: { user: User }): string | undefined {
-  if (!data) {
+  if (!data || !data.user) {
     return undefined;
   }
 

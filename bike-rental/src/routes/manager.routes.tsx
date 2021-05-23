@@ -1,11 +1,12 @@
 import React from 'react';
 import { Route, RouteComponentProps, Switch } from 'react-router-dom';
 import { Container, Heading } from '@chakra-ui/react';
-import Navigation, { NavItem } from '../container/navigation.container';
-import { UsersListPage } from '../pages/manager/manage/users/users-list';
-import { UserDetailPage } from '../pages/manager/manage/users/user-detail';
-import { BikesListPage } from '../pages/manager/manage/bikes/bikes-list';
-import { ReservationsPage } from '../pages/manager/reservations/reservations';
+import Navigation, { NavItem } from 'container/navigation.container';
+import { UsersListPage } from 'pages/manager/manage/users/users-list';
+import { UserDetailPage } from 'pages/manager/manage/users/user-detail';
+import { BikesListPage } from 'pages/manager/manage/bikes/bikes-list';
+import { ReservationsPage } from 'pages/manager/reservations/reservations';
+import { UserCreatePage } from 'pages/manager/manage/users/user-create';
 
 const NAV_ITEMS: NavItem[] = [
   {
@@ -38,9 +39,15 @@ const ManagerRoutes = ({ match }: RouteComponentProps): JSX.Element => {
           <Route path={`${match.path}/manage/users`} exact>
             <UsersListPage />
           </Route>
+
+          <Route path={`${match.path}/manage/users/create`} exact>
+            <UserCreatePage />
+          </Route>
+
           <Route path={`${match.path}/manage/users/:userId`} exact>
             <UserDetailPage />
           </Route>
+
           <Route path={`${match.path}/manage/bikes`} exact>
             <BikesListPage />
           </Route>

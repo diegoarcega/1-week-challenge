@@ -4,6 +4,7 @@ import { User } from 'types/user.type';
 import { api } from 'services/api';
 
 // TODO: refactor all api to use the helper
+
 export function getUser(userId: User['id']): Promise<{ user: User }> {
   const query = gql`
     query GetUser($userId: String!) {
@@ -21,6 +22,7 @@ export function getUser(userId: User['id']): Promise<{ user: User }> {
 
   return api<{ user: User }>({ query, variables });
 }
+
 export function getAllUsers(): Promise<{ users: User[] }> {
   return request(
     config.baseApiUrl,
