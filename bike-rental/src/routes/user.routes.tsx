@@ -24,7 +24,7 @@ const UserRoutes = ({ match }: RouteComponentProps): JSX.Element => {
   return (
     <>
       <Navigation options={NAV_ITEMS} />
-      <Container maxW="container.xl" mt={{ base: '5', md: '10' }}>
+      <Container maxW="container.xl" mt={{ base: '5', md: '10' }} pb="20">
         <Switch>
           <Route path={`${match.path}`} exact>
             <OpenReservationsPage />

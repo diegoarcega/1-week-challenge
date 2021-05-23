@@ -8,10 +8,67 @@ import { Bike } from 'types/bike.type';
 import { Rating } from 'types/rating.type';
 import { Reservation } from 'types/reservation.type';
 
-import { OPEN_RESERVATIONS } from './open-reservations.mock.data';
+import { availablePeriods, ratingAverages } from './open-reservations.mock.data';
 import { ALL_RESERVATIONS } from './all-reservations.mock.data';
 
+import { createRandomBikes } from './bikes.mock.data';
+import { getRandom } from './helpers';
+
+const USERS = [
+  {
+    id: '1',
+    name: 'Diego Manager',
+    email: 'diego.manager@gmail.com',
+    password: '11111111',
+    roles: ['manager'],
+  },
+  {
+    id: '2',
+    name: 'Diego Normal',
+    email: 'diego.normal@gmail.com',
+    password: '11111111',
+    roles: [],
+  },
+];
+
 const JWT_SECRET = 'Shhh';
+
+const AUTH_TOKENS_DATABASE_KEY = 'auth-tokens'; // used to check if they exist (dont need it anymore bc of JWT)
+const USERS_DATABASE_KEY = 'users'; // id, name, email, password, roles
+const BIKES_DATABASE_KEY = 'bikes'; // id, mode, color, location
+const RATINGS_DATABASE_KEY = 'ratings'; // id, userId, bikeId, rating
+const ALL_RESERVATIONS_DATABASE_KEY = 'all-reservations'; // id, userId, bikeId, periodOfTime // created by the user
+const OPEN_RESERVATIONS_COMBINATION = 'open-reservations'; // bikeId, rating, periodOfTime - fetch all BIKES_DATABASE_KEY
+// combine with RATINGS_DATABASE_KEY getting its avg, combine it with ALL_RESERVATIONS_DATABASE_KEY ang get the dates the bikes are busy
+const MY_RESERVATIONS_COMBINATION = 'my-reservations'; // fetch all ALL_RESERVATIONS_DATABASE_KEY with a userId
+// and combine it with BIKES_DATABASE_KEY and RATINGS_DATABASE_KEY; returns { bike model, periodOfTime, rating }
+
+Storage.setItem(USERS_DATABASE_KEY, USERS);
+
+Storage.setItem(RATINGS_DATABASE_KEY, []);
+Storage.setItem(ALL_RESERVATIONS_DATABASE_KEY, ALL_RESERVATIONS);
+
+// Storage.setItem(MY_RESERVATIONS_COMBINATION, MY_RESERVATIONS);
+
+Storage.setItem(AUTH_TOKENS_DATABASE_KEY, []);
+
+// will start without reservations
+function initApp() {
+  const randomBikes = createRandomBikes(50);
+  const openReservations = randomBikes.map((bike) => {
+    return {
+      bike,
+      ratingAverage: getRandom(ratingAverages),
+      availablePeriods: getRandom(availablePeriods),
+    };
+  });
+
+  // TODO: combine openReservations with RATINGS and ALL RESERVATIONS
+  Storage.setItem(OPEN_RESERVATIONS_COMBINATION, openReservations);
+  Storage.setItem(BIKES_DATABASE_KEY, randomBikes);
+}
+
+initApp();
 
 function createJwtToken(user: User): string {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -40,38 +97,6 @@ interface AuthTokensDatabase {
   [key: string]: User;
 }
 
-const USERS = [
-  {
-    id: '1',
-    name: 'Diego Manager',
-    email: 'diego.manager@gmail.com',
-    password: '11111111',
-    roles: ['manager'],
-  },
-  {
-    id: '2',
-    name: 'Diego Normal',
-    email: 'diego.normal@gmail.com',
-    password: '11111111',
-    roles: [],
-  },
-];
-
-const BIKES = [
-  {
-    id: '1',
-    model: '55-p4',
-    color: 'blue',
-    location: 'san diego, sf, usa',
-  },
-  {
-    id: '2',
-    model: '54-p4',
-    color: 'yellow',
-    location: 'san raphael, sf, usa',
-  },
-];
-
 export interface OpenReservation {
   bike: Bike;
   ratingAverage: Rating['rating'];
@@ -99,26 +124,6 @@ const MY_RESERVATIONS = [
     },
   },
 ];
-
-const AUTH_TOKENS_DATABASE_KEY = 'auth-tokens'; // used to check if they exist (dont need it anymore bc of JWT)
-const USERS_DATABASE_KEY = 'users'; // id, name, email, password, roles
-const BIKES_DATABASE_KEY = 'bikes'; // id, mode, color, location
-const RATINGS_DATABASE_KEY = 'ratings'; // id, userId, bikeId, rating
-const ALL_RESERVATIONS_DATABASE_KEY = 'all-reservations'; // id, userId, bikeId, periodOfTime // created by the user
-const OPEN_RESERVATIONS_COMBINATION = 'open-reservations'; // bikeId, rating, periodOfTime - fetch all BIKES_DATABASE_KEY
-// combine with RATINGS_DATABASE_KEY getting its avg, combine it with ALL_RESERVATIONS_DATABASE_KEY ang get the dates the bikes are busy
-const MY_RESERVATIONS_COMBINATION = 'my-reservations'; // fetch all ALL_RESERVATIONS_DATABASE_KEY with a userId
-// and combine it with BIKES_DATABASE_KEY and RATINGS_DATABASE_KEY; returns { bike model, periodOfTime, rating }
-
-Storage.setItem(USERS_DATABASE_KEY, USERS);
-Storage.setItem(BIKES_DATABASE_KEY, []);
-Storage.setItem(RATINGS_DATABASE_KEY, []);
-Storage.setItem(ALL_RESERVATIONS_DATABASE_KEY, ALL_RESERVATIONS);
-
-Storage.setItem(OPEN_RESERVATIONS_COMBINATION, OPEN_RESERVATIONS);
-Storage.setItem(MY_RESERVATIONS_COMBINATION, MY_RESERVATIONS);
-
-Storage.setItem(AUTH_TOKENS_DATABASE_KEY, []);
 
 export const handlers = [
   graphql.query('GetUsers', (req, res, ctx) => {
@@ -320,9 +325,11 @@ export const handlers = [
         ])
       );
     }
+
+    const allBikes = Storage.getItem(BIKES_DATABASE_KEY);
     return res(
       ctx.data({
-        bikes: BIKES,
+        bikes: allBikes,
       })
     );
   }),

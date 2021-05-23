@@ -9,7 +9,7 @@ import { config } from 'config/config';
 const client = new GraphQLClient(config.baseApiUrl);
 interface Api {
   query: string;
-  variables: Record<string, unknown>;
+  variables?: Record<string, unknown>;
 }
 
 export function api<T>({ query, variables }: Api): Promise<T> {

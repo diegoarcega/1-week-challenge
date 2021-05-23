@@ -1,19 +1,18 @@
-import { request, gql } from 'graphql-request';
-import { config } from '../config/config';
+import { gql } from 'graphql-request';
 import { Bike } from '../types/bike.type';
+import { api } from './api';
 
 export function getAllBikes(): Promise<{ bikes: Bike[] }> {
-  return request(
-    config.baseApiUrl,
-    gql`
-      query GetAllBikes {
-        bikes {
-          id
-          model
-          color
-          location
-        }
+  const query = gql`
+    query GetAllBikes {
+      bikes {
+        id
+        model
+        color
+        location
       }
-    `
-  );
+    }
+  `;
+
+  return api({ query });
 }

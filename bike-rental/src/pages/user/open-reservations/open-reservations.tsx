@@ -143,7 +143,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
   const totalPages = data ? data.openReservations.totalPages : 1;
   const selectedReservation = selectedOpenReservation?.current;
   return (
-    <Box pb="20">
+    <>
       <Box bg="white" p="5">
         <Flex
           as="form"
@@ -264,6 +264,6 @@ export const OpenReservationsPage = (): JSX.Element | null => {
           </DrawerContent>
         </Drawer>
       )}
-    </Box>
+    </>
   );
 };
