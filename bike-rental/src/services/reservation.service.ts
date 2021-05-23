@@ -88,20 +88,44 @@ export function reserve({ userId, bikeId, periodOfTime }: ReserveInput): Promise
   return api({ query, variables });
 }
 
-export function getMyReservations({ userId }: { userId: User['id'] }): Promise<{ myReservations: Reservation }> {
+export interface UpdateReservation extends Pick<Reservation, 'status'> {
+  reservationId: Reservation['id'];
+}
+export function updateReservation({
+  status,
+  reservationId,
+}: UpdateReservation): Promise<{ updatedReservation: UpdateReservation }> {
   const query = gql`
-    query MyReservations($userId: String!) {
-      myReservations {
+    mutation UpdateReservation($status: String!, $reservationId: String!) {
+      updatedReservation {
         id
-        name
-        email
-        roles
+        status
       }
     }
   `;
+
   const variables = {
-    userId,
+    status,
+    reservationId,
   };
 
   return api({ query, variables });
+}
+
+export interface MyReservation extends Pick<Reservation, 'id' | 'periodOfTime'> {
+  bike: Bike;
+}
+
+export function getMyReservations(): Promise<{ myReservations: MyReservation[] }> {
+  const query = gql`
+    query GetMyReservations {
+      myReservations {
+        id
+        periodOfTime
+        bike
+      }
+    }
+  `;
+
+  return api({ query });
 }

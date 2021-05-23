@@ -14,10 +14,6 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Reservations',
     href: '/dashboard/reservations',
   },
-  {
-    label: 'users',
-    href: '/manager/manage/users',
-  },
 ];
 
 const UserRoutes = ({ match }: RouteComponentProps): JSX.Element => {

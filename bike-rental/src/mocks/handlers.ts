@@ -89,6 +89,17 @@ function hasAuthTokenExpired(req: GraphQLRequest<GraphQLVariables>) {
   }
 }
 
+function getUserFromToken(req: GraphQLRequest<GraphQLVariables>) {
+  const token = req.headers.get('authorization');
+
+  if (token) {
+    const decodedToken = jwt.decode(token) as { data: User };
+    return decodedToken.data;
+  }
+
+  throw new Error('User is not authenticated');
+}
+
 interface UserDatabase extends User {
   password: string;
 }
@@ -434,7 +445,7 @@ export const handlers = [
       })
     );
   }),
-  graphql.query('MyReservations', (req, res, ctx) => {
+  graphql.query('GetMyReservations', (req, res, ctx) => {
     try {
       hasAuthTokenExpired(req);
     } catch {
@@ -446,14 +457,73 @@ export const handlers = [
         ])
       );
     }
-    const { userId } = req.variables;
+    const user = getUserFromToken(req);
 
-    const myReservations = Storage.getItem<MyReservation[]>(MY_RESERVATIONS_COMBINATION);
+    const allReservations = Storage.getItem<Reservation[]>(ALL_RESERVATIONS_DATABASE_KEY);
+    const allBikes = Storage.getItem<Bike[]>(BIKES_DATABASE_KEY);
+
+    const myReservations = allReservations.filter((reservation) => {
+      return reservation.userId === user.id && reservation.status === 'active';
+    });
+
+    const myReservationsWithBike = myReservations.map((reservation) => {
+      return {
+        ...reservation,
+        bike: allBikes.find((bike) => bike.id === reservation.bikeId),
+      };
+    });
 
     return res(
       ctx.data({
-        myReservations,
+        myReservations: myReservationsWithBike,
       })
+    );
+  }),
+  graphql.mutation('UpdateReservation', (req, res, ctx) => {
+    try {
+      hasAuthTokenExpired(req);
+    } catch {
+      return res(
+        ctx.errors([
+          {
+            message: 'Session has expired',
+          },
+        ])
+      );
+    }
+
+    const { reservationId, status } = req.variables;
+    const allReservations = Storage.getItem<Reservation[]>(ALL_RESERVATIONS_DATABASE_KEY);
+
+    const myReservationIndex = allReservations.findIndex((reservation) => reservation.id === reservationId);
+    if (myReservationIndex !== -1) {
+      const myReservation = allReservations[myReservationIndex];
+
+      // update my reservation
+      const myUpdatedReservation: Reservation = {
+        ...myReservation,
+        status,
+        // TODO: add rating
+      };
+
+      // update database with all reservations
+      allReservations[myReservationIndex] = myUpdatedReservation;
+      Storage.setItem(ALL_RESERVATIONS_DATABASE_KEY, allReservations);
+
+      // only with status active
+      return res(
+        ctx.data({
+          updatedReservation: myUpdatedReservation,
+        })
+      );
+    }
+
+    return res(
+      ctx.errors([
+        {
+          message: 'Reservation not found',
+        },
+      ])
     );
   }),
   graphql.mutation('Reserve', (req, res, ctx) => {
