@@ -30,6 +30,7 @@ const theme = extendTheme({
         minHeight: '100%',
         'min-height': '-webkit-fill-available',
         height: '100%',
+        paddingBottom: '10',
       },
     },
   },

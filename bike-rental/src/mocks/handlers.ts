@@ -6,6 +6,7 @@ import * as Storage from 'utils/storage.util';
 import { User } from 'types/user.type';
 import { Bike } from 'types/bike.type';
 import { Rating } from 'types/rating.type';
+import { OPEN_RESERVATIONS } from './open-reservations.mock.data';
 
 const JWT_SECRET = 'Shhh';
 
@@ -94,66 +95,6 @@ export interface OpenReservation {
   ratingAverage: Rating['rating'];
   availablePeriods: { from: string; to: string }[];
 }
-
-const OPEN_RESERVATIONS = [
-  {
-    bike: {
-      id: '1',
-      model: 'fiat',
-      color: 'blue',
-      location: 'san diego, sf, usa',
-    },
-    ratingAverage: 2,
-    availablePeriods: [
-      {
-        from: '2021-05-21',
-        to: '2021-05-22',
-      },
-      {
-        from: '2021-05-22',
-        to: '',
-      },
-    ],
-  },
-  {
-    bike: {
-      id: '2',
-      model: 'bmw',
-      color: 'red',
-      location: 'san rafael, sf, usa',
-    },
-    ratingAverage: 5,
-    availablePeriods: [
-      {
-        from: '2021-05-21',
-        to: '2021-05-22',
-      },
-      {
-        from: '2021-05-22',
-        to: '',
-      },
-    ],
-  },
-  {
-    bike: {
-      id: '3',
-      model: 'honda',
-      color: 'red',
-      location: 'san rafael, sf, usa',
-    },
-    ratingAverage: 5,
-    availablePeriods: [
-      {
-        from: '2021-05-21',
-        to: '2021-05-22',
-      },
-      {
-        from: '2021-05-22',
-        to: '',
-      },
-    ],
-  },
-];
 
 interface MyReservation {
   id: string;

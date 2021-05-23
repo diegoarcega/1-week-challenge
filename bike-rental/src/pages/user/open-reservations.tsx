@@ -78,7 +78,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const queryParamsRef = useRef({
-    perPage: 2,
+    perPage: 12,
     filters: {},
   });
   const queryParams = {
@@ -159,48 +159,70 @@ export const OpenReservationsPage = (): JSX.Element | null => {
 
   const totalPages = data ? data.openReservations.totalPages : 1;
   return (
-    <>
-      <Flex bg="white" p="5" justifyContent={{ base: 'center', sm: 'flex-end' }}>
+    <Box pb="20">
+      <Box bg="white" p="5">
         <Flex
           as="form"
           onSubmit={handleSearch}
-          flexDirection={{ base: 'column', sm: 'row' }}
-          w={{ base: 'full', sm: 'max-content' }}
+          flexDirection={{ base: 'column', lg: 'row' }}
+          justifyContent={{ base: 'initial', md: 'space-between' }}
+          w="full"
         >
-          <Box minW={{ base: 'full', sm: '200' }}>
-            <FormControl id="country">
-              <InputGroup>
-                <InputLeftAddon fontSize="sm">Search by</InputLeftAddon>
-                <Select name="searchBy" ref={selectRef}>
-                  <option value="bike.model">Model</option>
-                  <option value="bike.color">Color</option>
-                  <option value="bike.location">Location</option>
-                  <option value="rating">rating</option>
-                </Select>
+          <Flex flexDirection={{ base: 'column', md: 'row' }} justifyContent={{ md: 'flex-end', lg: 'flex-start' }}>
+            <FormControl id="from" w={{ base: 'full', md: '210px' }} mr={{ base: '0', md: '5' }}>
+              <InputGroup size="sm">
+                <InputLeftAddon bg="white">From</InputLeftAddon>
+                <Input ref={inputRef} type="date" />
               </InputGroup>
             </FormControl>
-          </Box>
-          <Flex flexDirection={{ base: 'column', sm: 'row' }} ml={{ base: '0', sm: '4' }}>
-            <FormControl id="term">
-              <InputGroup>
-                <InputLeftAddon fontSize="sm">Term</InputLeftAddon>
-                <Input placeholder="example: red" ref={inputRef} />
+            <FormControl id="to" mt={{ base: '1', md: '0' }} w={{ base: 'full', md: '210px' }}>
+              <InputGroup size="sm">
+                <InputLeftAddon bg="white">To</InputLeftAddon>
+                <Input placeholder="example: red" ref={inputRef} type="date" />
               </InputGroup>
             </FormControl>
-            <Button
-              type="submit"
-              colorScheme="blue"
-              minW={{ base: 'full', sm: '100' }}
-              ml={{ base: '0', sm: '2' }}
-              mt={{ base: '5', sm: '0' }}
-              isLoading={isSearching}
-            >
-              Search
-            </Button>
+          </Flex>
+          <Flex
+            flexDirection={{ base: 'column', md: 'row' }}
+            justifyContent={{ md: 'flex-end', lg: 'flex-start' }}
+            mt={{ md: '5', lg: '0' }}
+          >
+            <Box minW={{ base: 'full', md: '200' }} mt={{ base: '5', md: '0' }}>
+              <FormControl id="search-by" w={{ base: 'full', md: '190px' }}>
+                <InputGroup size="sm">
+                  <InputLeftAddon bg="white">Search by</InputLeftAddon>
+                  <Select name="searchBy" ref={selectRef}>
+                    <option value="bike.model">Model</option>
+                    <option value="bike.color">Color</option>
+                    <option value="bike.location">Location</option>
+                    <option value="rating">Rating</option>
+                  </Select>
+                </InputGroup>
+              </FormControl>
+            </Box>
+            <Flex flexDirection={{ base: 'column', md: 'row' }} ml={{ base: '0', md: '4' }}>
+              <FormControl id="term" mt={{ base: '1', md: '0' }} w={{ base: 'full', md: '210px' }}>
+                <InputGroup size="sm">
+                  <InputLeftAddon bg="white">Term</InputLeftAddon>
+                  <Input placeholder="example: red" ref={inputRef} />
+                </InputGroup>
+              </FormControl>
+              <Button
+                type="submit"
+                colorScheme="blue"
+                size="sm"
+                minW={{ base: 'full', md: '50' }}
+                ml={{ base: '0', md: '2' }}
+                mt={{ base: '5', md: '0' }}
+                isLoading={isSearching}
+              >
+                Search
+              </Button>
+            </Flex>
           </Flex>
         </Flex>
-      </Flex>
-      <SimpleGrid columns={[1, 3, 4]} gap="5" py="5">
+      </Box>
+      <SimpleGrid columns={[1, 2, 3, 4]} gap="5" py="5">
         {openReservations.map((reservation) => (
           <BikeCard
             key={reservation.bike.id}
@@ -211,16 +233,16 @@ export const OpenReservationsPage = (): JSX.Element | null => {
         ))}
       </SimpleGrid>
       {/* <DataTable data={openReservations} columns={COLUMNS} /> */}
-      <Flex justifyContent="flex-end" mt="2">
-        <ButtonGroup variant="outline" colorScheme="green">
-          <Button onClick={handlePrevious} isDisabled={page === 1}>
+      <Flex justifyContent={{ base: 'center', sm: 'flex-end' }} mt="5" w="full">
+        <ButtonGroup variant="outline" colorScheme="green" w={['full', 'xs']}>
+          <Button onClick={handlePrevious} isDisabled={page === 1} w={['full']}>
             Previous
           </Button>
-          <Button onClick={handleNext} isDisabled={page === totalPages}>
+          <Button onClick={handleNext} isDisabled={page === totalPages} w={['full']}>
             Next
           </Button>
         </ButtonGroup>
       </Flex>
-    </>
+    </Box>
   );
 };
