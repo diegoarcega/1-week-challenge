@@ -3,9 +3,9 @@ import { useHistory } from 'react-router-dom';
 import { Table, Thead, Tbody, Tr, Th, Td, Text, Flex, Button } from '@chakra-ui/react';
 import { useQuery } from 'react-query';
 import { RequestStatus } from 'components/request-status/request-status';
-import { getUser } from 'utils/user';
 import { getAllBikes } from 'services/bike.service';
 import { Bike } from 'types/bike.type';
+import { useUserStore } from 'stores/user.store';
 
 interface DataTableProps {
   columns: string[];
@@ -17,10 +17,11 @@ interface DataTableProps {
 type RequestType = { bikes: Bike[] };
 
 const COLUMNS = ['bike', 'location'];
-const cacheKey = ['users', getUser().id];
 
 export const BikesListPage = (): JSX.Element => {
   const history = useHistory();
+  const user = useUserStore((state) => state.user);
+  const cacheKey = ['bikes', user?.id];
   const { data, error, isLoading } = useQuery<RequestType>(cacheKey, getAllBikes);
 
   function handleCreateClick() {

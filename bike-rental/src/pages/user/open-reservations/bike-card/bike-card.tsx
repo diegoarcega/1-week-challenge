@@ -1,47 +1,16 @@
 /* eslint-disable react/no-array-index-key */
 import React from 'react';
 import { Flex, Circle, Box, Image, Badge, useColorModeValue, Text, Button } from '@chakra-ui/react';
-// import { BsStar, BsStarFill, BsStarHalf } from 'react-icons/bs';
-// import { FiShoppingCart } from 'react-icons/fi';
 import { Rating as RatingComponent } from 'components/rating/rating';
 import { Bike } from 'types/bike.type';
 import { Rating } from 'types/rating.type';
 
 const data = {
   isNew: true,
-  imageURL: 'https://media.zigcdn.com/media/model/2021/Feb/right-side-view-1977503713_930x620.jpg',
-  name: 'Wayfarer Classic',
-  price: 4.5,
-  rating: 4.2,
-  numReviews: 34,
+  imageURL:
+    'https://www.10wallpaper.com/wallpaper/1366x768/1710/2017_Triumph_street_cup_Motorcycles_Wallpaper_1366x768.jpg',
+  name: 'Yellow Tr',
 };
-
-interface RatingProps {
-  rating: number;
-  numReviews: number;
-}
-
-// function RatingComponent({ rating, numReviews }: RatingProps) {
-//   return (
-//     <Box d="flex" alignItems="center">
-//       {Array(5)
-//         .fill('')
-//         .map((_, i) => {
-//           const roundedRating = Math.round(rating * 2) / 2;
-//           if (roundedRating - i >= 1) {
-//             return <BsStarFill key={i} style={{ marginLeft: '1' }} color={i < rating ? 'teal.500' : 'gray.300'} />;
-//           }
-//           if (roundedRating - i === 0.5) {
-//             return <BsStarHalf key={i} style={{ marginLeft: '1' }} />;
-//           }
-//           return <BsStar key={i} style={{ marginLeft: '1' }} />;
-//         })}
-//       <Box as="span" ml="2" color="gray.600" fontSize="sm">
-//         {numReviews} review{numReviews > 1 && 's'}
-//       </Box>
-//     </Box>
-//   );
-// }
 
 interface BikeCardProps extends Omit<Bike, 'id'> {
   onReserve: () => void;

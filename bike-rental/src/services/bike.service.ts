@@ -34,3 +34,60 @@ export function createBike({ model, color, location }: CreateBikeInput): Promise
   const variables = { model, color, location };
   return api({ query, variables });
 }
+
+export function deleteBike(bikeId: Bike['id']): Promise<{ bikeId: Bike['id'] }> {
+  const query = gql`
+    mutation DeleteBike($bikeId: String!) {
+      bikeId
+    }
+  `;
+  const variables = {
+    bikeId,
+  };
+  return api<{ bikeId: Bike['id'] }>({ query, variables });
+}
+
+export function editBike(bike: Bike): Promise<{ bike: Bike }> {
+  const query = gql`
+    type Bike {
+      id: String!
+      model: String!
+      color: String!
+      location: String!
+    }
+
+    mutation EditBike($bike: Bike) {
+      bike {
+        id
+        model
+        color
+        location
+      }
+    }
+  `;
+
+  const variables = {
+    bike,
+  };
+
+  return api<{ bike: Bike }>({ query, variables });
+}
+
+export function getBike(bikeId: Bike['id']): Promise<{ bike: Bike }> {
+  const query = gql`
+    query GetBike($bikeId: String!) {
+      bike {
+        id
+        model
+        color
+        location
+      }
+    }
+  `;
+
+  const variables = {
+    bikeId,
+  };
+
+  return api<{ bike: Bike }>({ query, variables });
+}

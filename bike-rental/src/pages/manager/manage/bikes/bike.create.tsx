@@ -14,10 +14,8 @@ import { Input } from 'components/input/input';
 import { CreateBikeInput, createBike } from 'services/bike.service';
 import createRequiredSchema from 'validations/required';
 import { GraphQLError } from 'types/error.type';
-import { getUser } from 'utils/user';
 import { Bike } from 'types/bike.type';
-
-const cacheKey = ['bikes', getUser().id];
+import { useUserStore } from 'stores/user.store';
 
 const schema = yup.object().shape({
   model: createRequiredSchema('model'),
@@ -29,6 +27,8 @@ export const BikeCreatePage = (): JSX.Element => {
   const queryClient = useQueryClient();
   const history = useHistory();
   const toast = useToast();
+  const user = useUserStore((state) => state.user);
+  const cacheKey = ['bikes', user?.id];
 
   const {
     mutate,
@@ -56,7 +56,7 @@ export const BikeCreatePage = (): JSX.Element => {
   } = useForm<CreateBikeInput>({
     resolver: yupResolver(schema),
   });
-  console.log({ data });
+
   const errorMessage: string | undefined = (mutationError as GraphQLError)?.response?.errors[0].message;
   useEffect(() => {
     if (errorMessage) {
@@ -93,7 +93,6 @@ export const BikeCreatePage = (): JSX.Element => {
   }
 
   const onSubmit: SubmitHandler<CreateBikeInput> = (formData) => {
-    console.log({ formData });
     mutate({
       bike: formData,
     });

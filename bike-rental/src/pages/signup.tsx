@@ -125,7 +125,7 @@ export const CreateAccountPage = (): JSX.Element => {
 
                 <Text>
                   Already have an account?
-                  <Link as={LinkRouter} to="/login" color="blue.500">
+                  <Link as={LinkRouter} to="/login" color="blue.500" ml="1">
                     Log in
                   </Link>
                 </Text>

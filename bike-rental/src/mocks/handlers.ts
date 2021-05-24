@@ -9,11 +9,8 @@ import { Bike } from 'types/bike.type';
 import { Rating } from 'types/rating.type';
 import { Reservation } from 'types/reservation.type';
 
-import { availablePeriods } from './open-reservations.mock.data';
 import { ALL_RESERVATIONS } from './all-reservations.mock.data';
-
 import { createRandomBikes } from './bikes.mock.data';
-import { getRandom } from './helpers';
 
 type OpenReservationsWithPaginator = Record<string, string | number | { [key: string]: string } | undefined>;
 const USERS = [
@@ -33,8 +30,6 @@ const USERS = [
   },
 ];
 
-const JWT_SECRET = 'Shhh';
-
 const AUTH_TOKENS_DATABASE_KEY = 'auth-tokens'; // used to check if they exist (dont need it anymore bc of JWT)
 const USERS_DATABASE_KEY = 'users'; // id, name, email, password, roles
 const BIKES_DATABASE_KEY = 'bikes'; // id, mode, color, location
@@ -49,8 +44,6 @@ Storage.setItem(USERS_DATABASE_KEY, USERS);
 
 Storage.setItem(RATINGS_DATABASE_KEY, []);
 Storage.setItem(ALL_RESERVATIONS_DATABASE_KEY, ALL_RESERVATIONS);
-
-// Storage.setItem(MY_RESERVATIONS_COMBINATION, MY_RESERVATIONS);
 
 Storage.setItem(AUTH_TOKENS_DATABASE_KEY, []);
 
@@ -97,6 +90,7 @@ function initApp() {
 
 initApp();
 
+const JWT_SECRET = 'Shhhhhhhhh';
 function createJwtToken(user: User): string {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   return jwt.sign(
@@ -140,28 +134,6 @@ export interface OpenReservation {
   ratingAverage: Rating['rating'];
   periodsOfTime: { from: string; to: string }[];
 }
-
-interface MyReservation {
-  id: string;
-  bike: Bike;
-  periodOfTime: { from: string; to: string };
-}
-
-const MY_RESERVATIONS = [
-  {
-    id: '1',
-    bike: {
-      id: '2',
-      model: '54-p4',
-      color: 'yellow',
-      location: 'san raphael, sf, usa',
-    },
-    periodOfTime: {
-      from: '2021-05-21',
-      to: '2021-05-23',
-    },
-  },
-];
 
 export const handlers = [
   graphql.query('GetUsers', (req, res, ctx) => {
@@ -412,6 +384,86 @@ export const handlers = [
     return res(
       ctx.data({
         bike: newBike,
+      })
+    );
+  }),
+  graphql.mutation('EditBike', (req, res, ctx) => {
+    try {
+      hasAuthTokenExpired(req);
+    } catch {
+      return res(
+        ctx.errors([
+          {
+            message: 'Session has expired',
+          },
+        ])
+      );
+    }
+    const { bike } = req.variables as {
+      bike: Bike;
+    };
+
+    const allBikes = Storage.getItem<Bike[]>(BIKES_DATABASE_KEY);
+    const newBikes = allBikes.map((_bike) => {
+      if (_bike.id === bike.id) {
+        return {
+          ..._bike,
+          ...bike,
+        };
+      }
+      return _bike;
+    });
+
+    Storage.setItem(BIKES_DATABASE_KEY, newBikes);
+    return res(
+      ctx.data({
+        bike,
+      })
+    );
+  }),
+  graphql.query('GetBike', (req, res, ctx) => {
+    try {
+      hasAuthTokenExpired(req);
+    } catch {
+      return res(
+        ctx.errors([
+          {
+            message: 'Session has expired',
+          },
+        ])
+      );
+    }
+    const { bikeId } = req.variables;
+    const bikes = Storage.getItem<Bike[]>(BIKES_DATABASE_KEY);
+
+    return res(
+      ctx.data({
+        bike: bikes.find((bike) => bike.id === bikeId),
+      })
+    );
+  }),
+  graphql.mutation('DeleteBike', (req, res, ctx) => {
+    try {
+      hasAuthTokenExpired(req);
+    } catch {
+      return res(
+        ctx.errors([
+          {
+            message: 'Session has expired',
+          },
+        ])
+      );
+    }
+    const { bikeId } = req.variables;
+    const bikes = Storage.getItem<Bike[]>(BIKES_DATABASE_KEY);
+
+    const newBikes = bikes.filter((bike) => bike.id !== bikeId);
+
+    Storage.setItem(BIKES_DATABASE_KEY, newBikes);
+
+    return res(
+      ctx.data({
+        bikes: newBikes,
       })
     );
   }),
