@@ -1,4 +1,5 @@
 import { graphql, GraphQLRequest, GraphQLVariables } from 'msw';
+import dayjs from 'utils/date.util';
 import get from 'lodash/get';
 import { v4 as uuid } from 'uuid';
 import jwt from 'jsonwebtoken';
@@ -8,7 +9,7 @@ import { Bike } from 'types/bike.type';
 import { Rating } from 'types/rating.type';
 import { Reservation } from 'types/reservation.type';
 
-import { availablePeriods, ratingAverages } from './open-reservations.mock.data';
+import { availablePeriods } from './open-reservations.mock.data';
 import { ALL_RESERVATIONS } from './all-reservations.mock.data';
 
 import { createRandomBikes } from './bikes.mock.data';
@@ -55,7 +56,7 @@ Storage.setItem(AUTH_TOKENS_DATABASE_KEY, []);
 
 // will start without reservations
 function initApp() {
-  const randomBikes = createRandomBikes(50);
+  const randomBikes = createRandomBikes(3);
   const diegoNormal = USERS[1];
   // rate some bikes
   const ratings = [
@@ -85,7 +86,6 @@ function initApp() {
     return {
       bike,
       ratingAverage: bikeRatings.length === 0 ? null : ratingSum / bikeRatings.length,
-      availablePeriods: getRandom(availablePeriods),
     };
   });
 
@@ -104,7 +104,7 @@ function createJwtToken(user: User): string {
       data: user,
     },
     JWT_SECRET,
-    { expiresIn: '30min' }
+    { expiresIn: '2h' }
   );
 }
 
@@ -138,7 +138,7 @@ interface AuthTokensDatabase {
 export interface OpenReservation {
   bike: Bike;
   ratingAverage: Rating['rating'];
-  availablePeriods: { from: string; to: string }[];
+  periodsOfTime: { from: string; to: string }[];
 }
 
 interface MyReservation {
@@ -458,22 +458,49 @@ export const handlers = [
         ])
       );
     }
-    const { perPage, page, filters } = req.variables;
+    const { perPage, page, filters, from, to } = req.variables;
 
-    const openReservations = Storage.getItem<OpenReservationsWithPaginator[]>(OPEN_RESERVATIONS_COMBINATION);
+    // database
+    const openReservations = Storage.getItem<OpenReservation[]>(OPEN_RESERVATIONS_COMBINATION);
     const allRatings = Storage.getItem<Rating[]>(RATINGS_DATABASE_KEY);
 
-    const openReservationsWithRating = openReservations.map((reservation: { bike?: { id: string } }) => {
-      const bikeId = reservation.bike?.id;
+    // add ratings
+    const openReservationsWithRating = openReservations.map((reservation) => {
+      const bikeId = reservation.bike.id;
       const bikeRatings = allRatings.filter((rate) => rate.bikeId === bikeId);
       const ratingSum = bikeRatings.reduce((acc, item) => acc + item.rating, 0);
 
       return {
+        ...reservation,
         bike: reservation.bike,
         ratingAverage: bikeRatings.length === 0 ? undefined : ratingSum / bikeRatings.length,
-        // availablePeriods: getRandom(availablePeriods),
       };
     });
+
+    let openReservationsByDate = openReservationsWithRating;
+    // filter by date
+    // add periodoftime
+    // if from to, fetch all reservations and combine, then filter
+    const showByDate = false;
+
+    if (from !== dayjs().format('YYYY-MM-DD') && to !== '') {
+      const allReservations = Storage.getItem<Reservation[]>(ALL_RESERVATIONS_DATABASE_KEY);
+      openReservationsByDate = openReservationsWithRating.map((openReservation) => {
+        const reservationOfBike = allReservations.filter((reservation) => {
+          return reservation.bikeId === openReservation.bike.id;
+        });
+        return {
+          ...openReservation,
+          periodsOfTime: reservationOfBike.map((reservation) => reservation.periodOfTime),
+        };
+      });
+
+      openReservationsByDate = byDate({
+        from,
+        to,
+        results: openReservationsByDate as OpenReservation[],
+      });
+    }
 
     return res(
       ctx.data({
@@ -481,7 +508,7 @@ export const handlers = [
           perPage,
           page,
           filters,
-          results: openReservationsWithRating,
+          results: openReservationsByDate as unknown as OpenReservationsWithPaginator[],
         }),
       })
     );
@@ -650,19 +677,18 @@ export interface PaginationAndFilteringOutput<T> extends Omit<PaginationAndFilte
 }
 
 function withPaginationAndFiltering({ filters, perPage, page, results }: PaginationAndFiltering) {
-  const totalResultsLength = results.length;
-  const totalPages = Math.ceil(totalResultsLength / perPage);
   const pageIndex = page === 1 ? page - 1 : page;
   const endIndex = page === 1 ? perPage : pageIndex + perPage;
   const paginatedResults = results.slice(pageIndex, endIndex);
   const filteredResults = withFilters({ filters, results: paginatedResults });
+  const totalPagesFinal = filteredResults.length === 0 ? 1 : Math.ceil(filteredResults.length / perPage);
 
   return {
     perPage,
     page,
     results: filteredResults,
-    totalPages,
-    totalResults: totalResultsLength,
+    totalPages: totalPagesFinal,
+    totalResults: filteredResults.length,
   };
 }
 
@@ -678,4 +704,27 @@ function withFilters({ filters, results }: Pick<PaginationAndFiltering, 'filters
   });
 
   return filteredResults;
+}
+
+interface DateFilter {
+  from: string;
+  to: string;
+  results: OpenReservation[];
+}
+function byDate({ from, to, results }: DateFilter) {
+  return results.filter((result) => {
+    return !result.periodsOfTime.some((periodOfTime) => {
+      // const isFromReserved = dayjs(from).isBetween(periodOfTime.from, periodOfTime.to, null, '[]');
+      // const isToReserved = dayjs(to).isBetween(periodOfTime.from, periodOfTime.to, null, '[]');
+      const isBetweenFrom = dayjs(periodOfTime.from).isBetween(from, to, null, '[]');
+      const isBetweenTo = dayjs(periodOfTime.to).isBetween(from, to, null, '[]');
+
+      // bike is already reserved within the time range
+      if (isBetweenFrom || isBetweenTo) {
+        return true;
+      }
+
+      return false;
+    });
+  });
 }

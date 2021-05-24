@@ -32,38 +32,40 @@ export function getAllReservations(): Promise<{ allReservations: ReservationOutp
   );
 }
 
-export function getOpenReservations({
-  perPage,
-  page,
-  filters,
-}: Pick<PaginationAndFiltering, 'perPage' | 'page' | 'filters'>): Promise<{
+type GetOpenReservationsInput = Pick<PaginationAndFiltering, 'perPage' | 'page' | 'filters'> & {
+  from: string;
+  to: string;
+};
+export function getOpenReservations({ from, to, perPage, page, filters }: GetOpenReservationsInput): Promise<{
   openReservations: PaginationAndFilteringOutput<OpenReservation>;
 }> {
-  return request(
-    config.baseApiUrl,
-    gql`
-      query OpenReservations {
-        openReservations {
-          bike {
-            id
-            model
-            color
-            location
-          }
-          ratingAverage
-          availablePeriods {
-            from
-            to
-          }
+  const query = gql`
+    query OpenReservations {
+      openReservations {
+        bike {
+          id
+          model
+          color
+          location
+        }
+        ratingAverage
+        availablePeriods {
+          from
+          to
         }
       }
-    `,
-    {
-      perPage,
-      page,
-      filters,
     }
-  );
+  `;
+
+  const variables = {
+    from,
+    to,
+    perPage,
+    page,
+    filters,
+  };
+
+  return api({ query, variables });
 }
 
 export type ReserveInput = Omit<Reservation, 'id' | 'status'>;
@@ -80,6 +82,7 @@ export function reserve({ userId, bikeId, periodOfTime }: ReserveInput): Promise
       }
     }
   `;
+
   const variables = {
     userId,
     bikeId,

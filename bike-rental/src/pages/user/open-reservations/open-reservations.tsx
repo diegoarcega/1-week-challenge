@@ -1,11 +1,5 @@
 import React, { useRef } from 'react';
 import {
-  // Table,
-  // Thead,
-  // Tbody,
-  // Tr,
-  // Th,
-  // Td,
   Drawer,
   DrawerBody,
   DrawerFooter,
@@ -34,29 +28,41 @@ import { getOpenReservations, reserve, ReserveInput } from 'services/reservation
 import { OpenReservation, PaginationAndFilteringOutput } from 'mocks/handlers';
 import { BikeCard } from 'pages/user/open-reservations/bike-card/bike-card';
 import { getUser } from 'utils/user';
+import dayjs from 'utils/date.util';
 
 // TODO: DONT NEED TO BE LOGGED IN
 interface QueryParams {
+  from: string;
+  to: string;
   page: number;
   perPage: number;
   filters: Record<string, string>;
 }
+
+const initialFromDate = dayjs().format('YYYY-MM-DD');
+
 export const OpenReservationsPage = (): JSX.Element | null => {
   const [page, setPage] = React.useState(1);
   const selectRef = useRef<HTMLSelectElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fromRef = useRef<HTMLInputElement>(null);
   const toRef = useRef<HTMLInputElement>(null);
+  const searchByFromRef = useRef<HTMLInputElement | null>(null);
+  const searchByToRef = useRef<HTMLInputElement | null>(null);
   const selectedOpenReservation = useRef<OpenReservation | null>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const queryClient = useQueryClient();
   const toast = useToast();
   const queryParamsRef = useRef({
+    from: initialFromDate,
+    to: '',
     perPage: 12,
     filters: {},
   });
   const queryParams = {
     ...queryParamsRef.current,
+    // from: searchByFromRef.current?.value ?? initialFromDate,
+    // to: searchByToRef.current?.value ?? '',
     page,
   };
   const cacheKey = ['open-reservations', queryParams, getUser().id];
@@ -66,7 +72,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
       return getOpenReservations(queryParams);
     }
   );
-  console.log({ data });
+
   const { mutate, isLoading: isSearching } = useMutation(
     (queryParamsVariable: QueryParams) => {
       return getOpenReservations(queryParamsVariable);
@@ -123,6 +129,8 @@ export const OpenReservationsPage = (): JSX.Element | null => {
     event.preventDefault();
     const filterKey = selectRef.current?.value;
     const filterValue = inputRef.current?.value;
+    const from = searchByFromRef.current?.value;
+    const to = searchByToRef.current?.value;
     const query = {
       ...queryParams,
     };
@@ -132,6 +140,12 @@ export const OpenReservationsPage = (): JSX.Element | null => {
         [filterKey]: filterValue,
       };
     }
+
+    if (from && to) {
+      query.from = from;
+      query.to = to;
+    }
+
     mutate(query);
   }
 
@@ -149,7 +163,6 @@ export const OpenReservationsPage = (): JSX.Element | null => {
       ...reservation,
       onReserveBike: () => {
         selectedOpenReservation.current = reservation;
-        console.log(JSON.stringify(selectedOpenReservation.current, null, 2));
         onOpen();
       },
     }));
@@ -175,13 +188,13 @@ export const OpenReservationsPage = (): JSX.Element | null => {
             <FormControl id="from" w={{ base: 'full', md: '210px' }} mr={{ base: '0', md: '5' }}>
               <InputGroup size="sm">
                 <InputLeftAddon bg="white">From</InputLeftAddon>
-                <Input ref={inputRef} type="date" />
+                <Input ref={searchByFromRef} type="date" />
               </InputGroup>
             </FormControl>
             <FormControl id="to" mt={{ base: '1', md: '0' }} w={{ base: 'full', md: '210px' }}>
               <InputGroup size="sm">
                 <InputLeftAddon bg="white">To</InputLeftAddon>
-                <Input placeholder="example: red" ref={inputRef} type="date" />
+                <Input placeholder="example: red" ref={searchByToRef} type="date" />
               </InputGroup>
             </FormControl>
           </Flex>
