@@ -27,7 +27,7 @@ import {
   MenuDivider,
 } from '@chakra-ui/react';
 import { HamburgerIcon, CloseIcon, ChevronDownIcon, ChevronRightIcon } from '@chakra-ui/icons';
-import { getUser } from 'utils/user';
+import { useUserStore } from 'stores/user.store';
 
 /* eslint-disable react/require-default-props, react/no-unused-prop-types */
 export interface NavItem {
@@ -45,9 +45,12 @@ interface Props {
 export default function Navigation({ options }: Props): JSX.Element {
   const { isOpen, onToggle } = useDisclosure();
   const history = useHistory();
+  const user = useUserStore((state) => state.user);
+  const clearUser = useUserStore((state) => state.clearUser);
 
   function handleLogout() {
     Storage.removeItem(AUTHENTICATION_TOKEN_KEY);
+    clearUser();
     history.push('/login');
   }
 
@@ -75,8 +78,6 @@ export default function Navigation({ options }: Props): JSX.Element {
         <Container maxW="container.xl" display="flex">
           <Flex flex={{ base: 1 }} justify={{ base: 'start' }}>
             <Heading
-              as={NavLink}
-              to="/"
               textAlign={useBreakpointValue({ base: 'left' })}
               fontSize="24"
               mb="0"
@@ -95,7 +96,7 @@ export default function Navigation({ options }: Props): JSX.Element {
           <Stack flex={{ base: 1, md: 0 }} justify="flex-end" direction="row" spacing={6}>
             <Menu>
               <MenuButton as={Button} rightIcon={<ChevronDownIcon />} variant="link" size="sm" fontWeight="300">
-                {getUser().name}
+                {user?.name}
               </MenuButton>
               <MenuList>
                 <MenuItem>My account</MenuItem>
@@ -172,11 +173,11 @@ function DesktopSubNav({ label, href, subLabel }: NavItem) {
       display="block"
       p={2}
       rounded="md"
-      _hover={{ bg: useColorModeValue('green.50', 'gray.900') }}
+      _hover={{ bg: useColorModeValue('blue.50', 'gray.900') }}
     >
       <Stack direction="row" align="center">
         <Box>
-          <Text transition="all .3s ease" _groupHover={{ color: 'green.400' }} fontWeight={500}>
+          <Text transition="all .3s ease" _groupHover={{ color: 'blue.400' }} fontWeight={500}>
             {label}
           </Text>
           <Text fontSize="sm">{subLabel}</Text>
@@ -190,7 +191,7 @@ function DesktopSubNav({ label, href, subLabel }: NavItem) {
           align="center"
           flex={1}
         >
-          <Icon color="green.400" w={5} h={5} as={ChevronRightIcon} />
+          <Icon color="blue.400" w={5} h={5} as={ChevronRightIcon} />
         </Flex>
       </Stack>
     </Link>

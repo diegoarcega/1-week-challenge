@@ -83,7 +83,7 @@ function DataTable({ columns, data }: DataTableProps) {
             onClick={d.onOpen}
             _hover={{
               cursor: 'pointer',
-              backgroundColor: 'green.50',
+              backgroundColor: 'blue.50',
             }}
           >
             <Td>

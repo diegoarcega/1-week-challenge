@@ -10,7 +10,7 @@ const UserRoutesLazy = React.lazy(() => import(/* webpackChunkName: "UserRoutes"
 
 const LoadingFallback = () => (
   <Center height="100vh">
-    <Spinner size="xl" color="green.500" />
+    <Spinner size="xl" color="blue.500" />
   </Center>
 );
 
@@ -39,8 +39,10 @@ const Routes = (): JSX.Element => {
       <Route
         path="/dashboard"
         render={(props: RouteComponentProps) => (
-          <Suspense fallback={LoadingFallback}>
-            <UserRoutesLazy history={props.history} location={props.location} match={props.match} />
+          <Suspense fallback={<LoadingFallback />}>
+            <Authenticated>
+              <UserRoutesLazy history={props.history} location={props.location} match={props.match} />
+            </Authenticated>
           </Suspense>
         )}
       />

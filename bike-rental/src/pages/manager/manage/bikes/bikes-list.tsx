@@ -39,7 +39,7 @@ export const BikesListPage = (): JSX.Element => {
     <>
       <Flex justifyContent="flex-end" mb="5">
         <Button colorScheme="blue" onClick={handleCreateClick}>
-          Create Bke
+          Create Bike
         </Button>
       </Flex>
       <RequestStatus
@@ -85,7 +85,7 @@ function DataTable({ columns, data }: DataTableProps) {
             onClick={d.onOpen}
             _hover={{
               cursor: 'pointer',
-              backgroundColor: 'green.50',
+              backgroundColor: 'blue.50',
             }}
           >
             <Td>

@@ -24,15 +24,10 @@ const UserRoutes = ({ match }: RouteComponentProps): JSX.Element => {
         <Switch>
           <Route path={`${match.path}`} exact>
             <OpenReservationsPage />
-            {/* <p>
-              * See a list of all available bikes for some specific dates. * Filter by model, color, location, or rate
-              averages. * Reserve a bike for a specific period of time. * Rate the bikes with a score of 1 to 5.
-            </p> */}
           </Route>
 
           <Route path={`${match.path}/reservations`} exact>
             <MyReservationsPage />
-            {/* <p>* Cancel a reservation.</p> */}
           </Route>
           <Route>
             <Heading>Page not found</Heading>

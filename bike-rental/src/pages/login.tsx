@@ -49,7 +49,7 @@ export const LoginPage = (): JSX.Element => {
       Storage.setItem(AUTHENTICATION_TOKEN_KEY, token);
 
       if (user.roles.includes('manager')) {
-        history.push('/manager');
+        history.push('/manager/manage/users');
         return;
       }
 
