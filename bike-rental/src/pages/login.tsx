@@ -12,6 +12,9 @@ import passwordSchema from 'validations/password';
 import { login } from 'services/auth.service';
 import * as Storage from 'utils/storage.util';
 import { AUTHENTICATION_TOKEN_KEY } from 'constants/storage.constant';
+import { useUserStore } from 'stores/user.store';
+import jwtDecode from 'jwt-decode';
+import { User } from 'types/user.type';
 
 const schema = yup.object().shape({
   email: emailSchema,
@@ -35,11 +38,14 @@ export const LoginPage = (): JSX.Element => {
     resolver: yupResolver(schema),
   });
   const history = useHistory();
+  const setUser = useUserStore((state) => state.setUser);
 
   const onSubmit: SubmitHandler<FormInput> = async ({ email, password }) => {
     try {
       clearErrors('formError');
       const { token, user } = await login({ email, password });
+      const userFromToken = jwtDecode<{ data: User }>(token);
+      setUser(userFromToken.data);
       Storage.setItem(AUTHENTICATION_TOKEN_KEY, token);
 
       if (user.roles.includes('manager')) {
@@ -60,8 +66,8 @@ export const LoginPage = (): JSX.Element => {
     <Stack minH="100vh" direction={{ base: 'column', md: 'row' }}>
       <Flex p={8} flex={1} align="center" justify="center">
         <Stack spacing={4} w="full" maxW="md">
-          <Heading fontSize="6xl" color="green.500" mb="3" fontWeight="black" letterSpacing="tighter">
-            TRECK
+          <Heading fontSize="6xl" color="blue.500" mb="3" fontWeight="black" letterSpacing="tighter">
+            BikeWorld
           </Heading>
           <Heading fontSize="2xl">Sign in to your account</Heading>
           <Text>
@@ -97,7 +103,7 @@ export const LoginPage = (): JSX.Element => {
                   )}
                 />
 
-                <Button type="submit" colorScheme="green" size="lg" fontSize="md">
+                <Button type="submit" colorScheme="blue" size="lg" fontSize="md">
                   Sign in
                 </Button>
               </Stack>
@@ -110,7 +116,7 @@ export const LoginPage = (): JSX.Element => {
           alt="Login Image"
           objectFit="cover"
           maxHeight="100%"
-          src="https://gumlet.assettype.com/bloombergquint%2F2020-08%2Fcdfaedf9-42e9-452a-9c08-817a9dac38a7%2Fbicycle.jpg?rect=288%2C0%2C3635%2C2617&auto=format%2Ccompress&w=1200"
+          src="https://www.10wallpaper.com/wallpaper/1366x768/1710/BMW_motorrad_concept_Motorcycles_Wallpaper_1366x768.jpg"
         />
       </Flex>
     </Stack>

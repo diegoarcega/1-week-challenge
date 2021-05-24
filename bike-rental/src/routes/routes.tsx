@@ -3,6 +3,7 @@ import React, { Suspense } from 'react';
 import { Route, Switch, Redirect, RouteComponentProps } from 'react-router-dom';
 import { LoginPage } from '../pages/login';
 import { CreateAccountPage } from '../pages/signup';
+import Authenticated from './authenticated.route';
 
 const ManagerRoutesLazy = React.lazy(() => import(/* webpackChunkName: "ManagerRoutes" */ './manager.routes'));
 const UserRoutesLazy = React.lazy(() => import(/* webpackChunkName: "UserRoutes" */ './user.routes'));
@@ -29,7 +30,9 @@ const Routes = (): JSX.Element => {
         path="/manager"
         render={(props: RouteComponentProps) => (
           <Suspense fallback={<LoadingFallback />}>
-            <ManagerRoutesLazy history={props.history} location={props.location} match={props.match} />
+            <Authenticated>
+              <ManagerRoutesLazy history={props.history} location={props.location} match={props.match} />
+            </Authenticated>
           </Suspense>
         )}
       />

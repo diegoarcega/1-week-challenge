@@ -28,7 +28,6 @@ import { getOpenReservations, reserve, ReserveInput } from 'services/reservation
 import { OpenReservation, PaginationAndFilteringOutput } from 'mocks/handlers';
 import { BikeCard } from 'pages/user/open-reservations/bike-card/bike-card';
 import { getUser } from 'utils/user';
-import dayjs from 'utils/date.util';
 
 // TODO: DONT NEED TO BE LOGGED IN
 interface QueryParams {
@@ -38,8 +37,6 @@ interface QueryParams {
   perPage: number;
   filters: Record<string, string>;
 }
-
-const initialFromDate = dayjs().format('YYYY-MM-DD');
 
 export const OpenReservationsPage = (): JSX.Element | null => {
   const [page, setPage] = React.useState(1);
@@ -54,15 +51,13 @@ export const OpenReservationsPage = (): JSX.Element | null => {
   const queryClient = useQueryClient();
   const toast = useToast();
   const queryParamsRef = useRef({
-    from: initialFromDate,
+    from: '',
     to: '',
     perPage: 12,
     filters: {},
   });
   const queryParams = {
     ...queryParamsRef.current,
-    // from: searchByFromRef.current?.value ?? initialFromDate,
-    // to: searchByToRef.current?.value ?? '',
     page,
   };
   const cacheKey = ['open-reservations', queryParams, getUser().id];
@@ -73,7 +68,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
     }
   );
 
-  const { mutate, isLoading: isSearching } = useMutation(
+  const { mutate: searchMutation, isLoading: isSearching } = useMutation(
     (queryParamsVariable: QueryParams) => {
       return getOpenReservations(queryParamsVariable);
     },
@@ -141,12 +136,12 @@ export const OpenReservationsPage = (): JSX.Element | null => {
       };
     }
 
-    if (from && to) {
+    if (from !== undefined && to !== undefined) {
       query.from = from;
       query.to = to;
     }
 
-    mutate(query);
+    searchMutation(query);
   }
 
   function handlePrevious() {
@@ -188,13 +183,13 @@ export const OpenReservationsPage = (): JSX.Element | null => {
             <FormControl id="from" w={{ base: 'full', md: '210px' }} mr={{ base: '0', md: '5' }}>
               <InputGroup size="sm">
                 <InputLeftAddon bg="white">From</InputLeftAddon>
-                <Input ref={searchByFromRef} type="date" />
+                <Input ref={searchByFromRef} type="date" defaultValue="" />
               </InputGroup>
             </FormControl>
             <FormControl id="to" mt={{ base: '1', md: '0' }} w={{ base: 'full', md: '210px' }}>
               <InputGroup size="sm">
                 <InputLeftAddon bg="white">To</InputLeftAddon>
-                <Input placeholder="example: red" ref={searchByToRef} type="date" />
+                <Input placeholder="example: red" ref={searchByToRef} type="date" defaultValue="" />
               </InputGroup>
             </FormControl>
           </Flex>

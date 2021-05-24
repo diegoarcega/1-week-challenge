@@ -29,7 +29,3 @@ export function isTokenValid(token: string): boolean {
 
   return true;
 }
-
-export function decodeToken(token: string): { exp: number } {
-  return jwtDecode(token);
-}

@@ -58,19 +58,19 @@ export const CreateAccountPage = (): JSX.Element => {
   };
 
   return (
-    <Stack minH="100vh" direction={{ base: 'column', md: 'row' }} bg="green.500">
+    <Stack minH="100vh" direction={{ base: 'column', md: 'row' }} bg="red.800">
       <Flex flex={1}>
         <Image
           alt="Login Image"
           objectFit="cover"
           maxHeight="100%"
-          src="https://gumlet.assettype.com/bloombergquint%2F2020-08%2Fcdfaedf9-42e9-452a-9c08-817a9dac38a7%2Fbicycle.jpg?rect=288%2C0%2C3635%2C2617&auto=format%2Ccompress&w=1200"
+          src="https://images.pexels.com/photos/2317519/pexels-photo-2317519.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260"
         />
       </Flex>
       <Flex p={8} flex={1} align="center" justify="center">
         <Stack spacing={1} w="full" maxW="md">
-          <Heading fontSize="5xl" fontWeight="black" letterSpacing="tighter" color="green.50">
-            TRECK
+          <Heading fontSize="5xl" fontWeight="black" letterSpacing="tighter" color="blue.50">
+            BikeWorld
           </Heading>
           <Text color="green.50">A few clicks away from creating your ticket to freedom</Text>
           <Box py="8" px={{ base: '4', md: '10' }} shadow="base" rounded={{ sm: 'lg' }} bg="white">
@@ -119,7 +119,7 @@ export const CreateAccountPage = (): JSX.Element => {
                   )}
                 />
 
-                <Button type="submit" colorScheme="green" size="lg" fontSize="md">
+                <Button type="submit" colorScheme="blue" size="lg" fontSize="md">
                   Create my account
                 </Button>
 

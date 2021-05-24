@@ -1,5 +1,7 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useHistory } from 'react-router-dom';
+import * as Storage from 'utils/storage.util';
+import { AUTHENTICATION_TOKEN_KEY } from 'constants/storage.constant';
 import {
   Box,
   Flex,
@@ -18,8 +20,14 @@ import {
   useBreakpointValue,
   useDisclosure,
   Container,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  MenuDivider,
 } from '@chakra-ui/react';
 import { HamburgerIcon, CloseIcon, ChevronDownIcon, ChevronRightIcon } from '@chakra-ui/icons';
+import { getUser } from 'utils/user';
 
 /* eslint-disable react/require-default-props, react/no-unused-prop-types */
 export interface NavItem {
@@ -36,6 +44,12 @@ interface Props {
 
 export default function Navigation({ options }: Props): JSX.Element {
   const { isOpen, onToggle } = useDisclosure();
+  const history = useHistory();
+
+  function handleLogout() {
+    Storage.removeItem(AUTHENTICATION_TOKEN_KEY);
+    history.push('/login');
+  }
 
   return (
     <Box>
@@ -66,11 +80,11 @@ export default function Navigation({ options }: Props): JSX.Element {
               textAlign={useBreakpointValue({ base: 'left' })}
               fontSize="24"
               mb="0"
-              color="green.300"
+              color="blue.300"
               fontWeight="black"
               letterSpacing="tighter"
             >
-              TRECK
+              BikeWorld
             </Heading>
 
             <Flex display={{ base: 'none', md: 'flex' }} ml={10}>
@@ -79,9 +93,16 @@ export default function Navigation({ options }: Props): JSX.Element {
           </Flex>
 
           <Stack flex={{ base: 1, md: 0 }} justify="flex-end" direction="row" spacing={6}>
-            <Button as={NavLink} fontSize={{ base: 'sm', md: 'lg' }} fontWeight={400} variant="link" to="/">
-              Log out
-            </Button>
+            <Menu>
+              <MenuButton as={Button} rightIcon={<ChevronDownIcon />} variant="link" size="sm" fontWeight="300">
+                {getUser().name}
+              </MenuButton>
+              <MenuList>
+                <MenuItem>My account</MenuItem>
+                <MenuDivider />
+                <MenuItem onClick={handleLogout}>Log out</MenuItem>
+              </MenuList>
+            </Menu>
           </Stack>
         </Container>
       </Flex>

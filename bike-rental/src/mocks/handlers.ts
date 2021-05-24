@@ -481,9 +481,10 @@ export const handlers = [
     // filter by date
     // add periodoftime
     // if from to, fetch all reservations and combine, then filter
-    const showByDate = false;
-
-    if (from !== dayjs().format('YYYY-MM-DD') && to !== '') {
+    console.log({ from, to });
+    console.log(from !== '');
+    console.log(to !== '');
+    if (from !== '' && to !== '') {
       const allReservations = Storage.getItem<Reservation[]>(ALL_RESERVATIONS_DATABASE_KEY);
       openReservationsByDate = openReservationsWithRating.map((openReservation) => {
         const reservationOfBike = allReservations.filter((reservation) => {
@@ -500,8 +501,10 @@ export const handlers = [
         to,
         results: openReservationsByDate as OpenReservation[],
       });
+      console.log('calculating', openReservationsByDate);
     }
 
+    console.log({ openReservationsByDate });
     return res(
       ctx.data({
         openReservations: withPaginationAndFiltering({
@@ -714,13 +717,24 @@ interface DateFilter {
 function byDate({ from, to, results }: DateFilter) {
   return results.filter((result) => {
     return !result.periodsOfTime.some((periodOfTime) => {
-      // const isFromReserved = dayjs(from).isBetween(periodOfTime.from, periodOfTime.to, null, '[]');
-      // const isToReserved = dayjs(to).isBetween(periodOfTime.from, periodOfTime.to, null, '[]');
-      const isBetweenFrom = dayjs(periodOfTime.from).isBetween(from, to, null, '[]');
-      const isBetweenTo = dayjs(periodOfTime.to).isBetween(from, to, null, '[]');
+      let isFromReserved = false;
+      let isToReserved = false;
+      let isBetweenFrom = false;
+      let isBetweenTo = false;
+
+      if (from === to) {
+        isFromReserved = dayjs(from).isBetween(periodOfTime.from, periodOfTime.to, null, '[]');
+        isToReserved = dayjs(to).isBetween(periodOfTime.from, periodOfTime.to, null, '[]');
+      } else {
+        isBetweenFrom = dayjs(periodOfTime.from).isBetween(from, to, null, '[]');
+        isBetweenTo = dayjs(periodOfTime.to).isBetween(from, to, null, '[]');
+
+        isFromReserved = dayjs(from).isBetween(periodOfTime.from, periodOfTime.to, null, '[]');
+        isToReserved = dayjs(to).isBetween(periodOfTime.from, periodOfTime.to, null, '[]');
+      }
 
       // bike is already reserved within the time range
-      if (isBetweenFrom || isBetweenTo) {
+      if (isBetweenFrom || isBetweenTo || isFromReserved || isToReserved) {
         return true;
       }
 
