@@ -14,6 +14,7 @@ import { ALL_RESERVATIONS } from './all-reservations.mock.data';
 import { createRandomBikes } from './bikes.mock.data';
 import { getRandom } from './helpers';
 
+type OpenReservationsWithPaginator = Record<string, string | number | { [key: string]: string } | undefined>;
 const USERS = [
   {
     id: '1',
@@ -55,17 +56,43 @@ Storage.setItem(AUTH_TOKENS_DATABASE_KEY, []);
 // will start without reservations
 function initApp() {
   const randomBikes = createRandomBikes(50);
-  const openReservations = randomBikes.map((bike) => {
+  const diegoNormal = USERS[1];
+  // rate some bikes
+  const ratings = [
+    {
+      id: uuid(),
+      userId: diegoNormal.id,
+      bikeId: randomBikes[0].id,
+      rating: 4,
+    },
+    {
+      id: uuid(),
+      userId: USERS[0].id,
+      bikeId: randomBikes[0].id,
+      rating: 1,
+    },
+    {
+      id: uuid(),
+      userId: diegoNormal.id,
+      bikeId: randomBikes[1].id,
+      rating: 5,
+    },
+  ];
+
+  const openReservationsWithRating = randomBikes.map((bike) => {
+    const bikeRatings = ratings.filter((rate) => rate.bikeId === bike.id);
+    const ratingSum = bikeRatings.reduce((acc, item) => acc + item.rating, 0);
     return {
       bike,
-      ratingAverage: getRandom(ratingAverages),
+      ratingAverage: bikeRatings.length === 0 ? null : ratingSum / bikeRatings.length,
       availablePeriods: getRandom(availablePeriods),
     };
   });
 
-  // TODO: combine openReservations with RATINGS and ALL RESERVATIONS
-  Storage.setItem(OPEN_RESERVATIONS_COMBINATION, openReservations);
+  // TODO: combine openReservations with  ALL RESERVATIONS
+  Storage.setItem(OPEN_RESERVATIONS_COMBINATION, openReservationsWithRating);
   Storage.setItem(BIKES_DATABASE_KEY, randomBikes);
+  Storage.setItem(RATINGS_DATABASE_KEY, ratings);
 }
 
 initApp();
@@ -433,14 +460,28 @@ export const handlers = [
     }
     const { perPage, page, filters } = req.variables;
 
-    const openReservations = Storage.getItem<Record<string, string>[]>(OPEN_RESERVATIONS_COMBINATION);
+    const openReservations = Storage.getItem<OpenReservationsWithPaginator[]>(OPEN_RESERVATIONS_COMBINATION);
+    const allRatings = Storage.getItem<Rating[]>(RATINGS_DATABASE_KEY);
+
+    const openReservationsWithRating = openReservations.map((reservation: { bike?: { id: string } }) => {
+      const bikeId = reservation.bike?.id;
+      const bikeRatings = allRatings.filter((rate) => rate.bikeId === bikeId);
+      const ratingSum = bikeRatings.reduce((acc, item) => acc + item.rating, 0);
+
+      return {
+        bike: reservation.bike,
+        ratingAverage: bikeRatings.length === 0 ? undefined : ratingSum / bikeRatings.length,
+        // availablePeriods: getRandom(availablePeriods),
+      };
+    });
+
     return res(
       ctx.data({
         openReservations: withPaginationAndFiltering({
           perPage,
           page,
           filters,
-          results: openReservations,
+          results: openReservationsWithRating,
         }),
       })
     );
@@ -460,6 +501,7 @@ export const handlers = [
     const user = getUserFromToken(req);
 
     const allReservations = Storage.getItem<Reservation[]>(ALL_RESERVATIONS_DATABASE_KEY);
+    const allRatings = Storage.getItem<Rating[]>(RATINGS_DATABASE_KEY);
     const allBikes = Storage.getItem<Bike[]>(BIKES_DATABASE_KEY);
 
     const myReservations = allReservations.filter((reservation) => {
@@ -470,6 +512,7 @@ export const handlers = [
       return {
         ...reservation,
         bike: allBikes.find((bike) => bike.id === reservation.bikeId),
+        rating: allRatings.find((rating) => rating.userId === user.id && rating.bikeId === reservation.bikeId)?.rating,
       };
     });
 
@@ -526,6 +569,39 @@ export const handlers = [
       ])
     );
   }),
+  graphql.mutation('RateBike', (req, res, ctx) => {
+    try {
+      hasAuthTokenExpired(req);
+    } catch {
+      return res(
+        ctx.errors([
+          {
+            message: 'Session has expired',
+          },
+        ])
+      );
+    }
+
+    const user = getUserFromToken(req);
+    const { bikeId, rating } = req.variables as { bikeId: Bike['id']; rating: Rating['rating'] };
+
+    const newRating = {
+      id: uuid(),
+      bikeId,
+      rating,
+      userId: user.id,
+    };
+
+    const allRatings = Storage.getItem<Rating[]>(RATINGS_DATABASE_KEY);
+    allRatings.push(newRating);
+    Storage.setItem(RATINGS_DATABASE_KEY, allRatings);
+
+    return res(
+      ctx.data({
+        bikeRating: newRating,
+      })
+    );
+  }),
   graphql.mutation('Reserve', (req, res, ctx) => {
     const { userId, bikeId, periodOfTime } = req.variables;
     try {
@@ -564,7 +640,7 @@ export interface PaginationAndFiltering {
   filters: { [key: string]: string };
   perPage: number;
   page: number;
-  results: Record<string, string>[];
+  results: OpenReservationsWithPaginator[];
 }
 
 export interface PaginationAndFilteringOutput<T> extends Omit<PaginationAndFiltering, 'filters' | 'results'> {
@@ -597,7 +673,7 @@ function withFilters({ filters, results }: Pick<PaginationAndFiltering, 'filters
     }
 
     return Object.entries(filters).some(([filterKey, filterValue]) => {
-      return get(result, filterKey).includes(filterValue);
+      return (get(result, filterKey) as string).includes(filterValue);
     });
   });
 

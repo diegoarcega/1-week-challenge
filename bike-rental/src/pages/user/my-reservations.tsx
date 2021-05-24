@@ -16,10 +16,14 @@ import {
   AlertDialogCloseButton,
   useDisclosure,
   useToast,
+  Flex,
 } from '@chakra-ui/react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { getUser } from 'utils/user';
 import { MyReservation, getMyReservations, updateReservation, UpdateReservation } from 'services/reservation.service';
+import { Rating as RatingComponent } from 'components/rating/rating';
+import { rateBike, RateBikeInput } from 'services/rating.service';
+import { Rating } from 'types/rating.type';
 
 const COLUMNS = ['bike', 'period of time', 'action'];
 const cacheKey = ['my-reservations', getUser().id];
@@ -27,6 +31,7 @@ interface DataTableProps {
   columns: string[];
   data: (MyReservation & {
     onCancelReservation: () => void;
+    onRateChange: (rating: Rating['rating']) => void;
   })[];
 }
 // TODO: make it responsive
@@ -46,9 +51,12 @@ function DataTable({ columns, data }: DataTableProps) {
             <Td>{d.bike.model}</Td>
             <Td>{JSON.stringify(d.periodOfTime, null, 2)}</Td>
             <Td>
-              <Button variant="solid" onClick={d.onCancelReservation} size="sm">
-                cancel
-              </Button>
+              <Flex alignItems="center">
+                <RatingComponent onChange={d.onRateChange} value={d.rating} edit={d.rating === undefined} />
+                <Button variant="solid" onClick={d.onCancelReservation} size="sm">
+                  cancel
+                </Button>
+              </Flex>
             </Td>
           </Tr>
         ))}
@@ -70,21 +78,54 @@ export const MyReservationsPage = (): JSX.Element => {
     },
     {
       onSuccess: (dataSuccess, updateVariables) => {
-        queryClient.setQueryData<{ myReservations: MyReservation[] } | undefined>(cacheKey, (oldData) => {
-          toast({
-            title: 'Reservation cancelled',
-            description: 'Your reservation was successfully cancelled',
-            position: 'bottom-right',
-            status: 'success',
-            variant: 'top-accent',
-          });
+        toast({
+          title: 'Reservation cancelled',
+          description: 'Your reservation was successfully cancelled',
+          position: 'bottom-right',
+          status: 'success',
+          variant: 'top-accent',
+        });
 
-          onClose();
+        onClose();
+
+        queryClient.setQueryData<{ myReservations: MyReservation[] } | undefined>(cacheKey, (oldData) => {
           return oldData
             ? {
                 myReservations: oldData.myReservations.filter(
                   (reservation) => reservation.id !== updateVariables.reservationId
                 ),
+              }
+            : undefined;
+        });
+      },
+    }
+  );
+  const { mutate: rateBikeMutation, error: bikeMutationError } = useMutation(
+    (updateVariables: RateBikeInput) => {
+      return rateBike(updateVariables);
+    },
+    {
+      onSuccess: (dataSuccess, updateVariables) => {
+        toast({
+          title: 'Bike rated!',
+          position: 'bottom-right',
+          status: 'success',
+          variant: 'top-accent',
+        });
+
+        queryClient.setQueryData<{ myReservations: MyReservation[] } | undefined>(cacheKey, (oldData) => {
+          return oldData
+            ? {
+                myReservations: oldData.myReservations.map((reservation) => {
+                  if (reservation.bike.id === updateVariables.bikeId) {
+                    return {
+                      ...reservation,
+                      rating: updateVariables.rating,
+                    };
+                  }
+
+                  return reservation;
+                }),
               }
             : undefined;
         });
@@ -135,6 +176,12 @@ export const MyReservationsPage = (): JSX.Element => {
     onCancelReservation: () => {
       selectedReservationId.current = reservation.id;
       onOpen();
+    },
+    onRateChange: (rating: Rating['rating']) => {
+      rateBikeMutation({
+        rating,
+        bikeId: reservation.bike.id,
+      });
     },
   }));
 

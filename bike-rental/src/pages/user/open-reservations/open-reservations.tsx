@@ -27,6 +27,7 @@ import {
   Text,
   FormLabel,
   VStack,
+  useToast,
 } from '@chakra-ui/react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { getOpenReservations, reserve, ReserveInput } from 'services/reservation.service';
@@ -49,7 +50,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
   const selectedOpenReservation = useRef<OpenReservation | null>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const queryClient = useQueryClient();
-
+  const toast = useToast();
   const queryParamsRef = useRef({
     perPage: 12,
     filters: {},
@@ -58,14 +59,14 @@ export const OpenReservationsPage = (): JSX.Element | null => {
     ...queryParamsRef.current,
     page,
   };
-  const cacheKey = ['open-reservations', queryParams];
+  const cacheKey = ['open-reservations', queryParams, getUser().id];
   const { data, error, isLoading } = useQuery<{ openReservations: PaginationAndFilteringOutput<OpenReservation> }>(
     cacheKey,
     () => {
       return getOpenReservations(queryParams);
     }
   );
-
+  console.log({ data });
   const { mutate, isLoading: isSearching } = useMutation(
     (queryParamsVariable: QueryParams) => {
       return getOpenReservations(queryParamsVariable);
@@ -82,9 +83,22 @@ export const OpenReservationsPage = (): JSX.Element | null => {
     }
   );
 
-  const { mutate: reserveMutatation, isLoading: isReserving } = useMutation((variables: ReserveInput) => {
-    return reserve(variables);
-  });
+  const { mutate: reserveMutatation, isLoading: isReserving } = useMutation(
+    (variables: ReserveInput) => {
+      return reserve(variables);
+    },
+    {
+      onSuccess: () => {
+        toast({
+          title: 'Reservation created',
+          description: 'Your reservation was successfully created',
+          position: 'bottom-right',
+          status: 'success',
+          variant: 'top-accent',
+        });
+      },
+    }
+  );
 
   function handleReserve() {
     const bikeId = selectedOpenReservation.current?.bike.id;
@@ -218,6 +232,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
             model={reservation.bike.model}
             color={reservation.bike.color}
             location={reservation.bike.location}
+            ratingAverage={reservation.ratingAverage}
             onReserve={reservation.onReserveBike}
           />
         ))}

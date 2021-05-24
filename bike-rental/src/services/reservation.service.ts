@@ -4,6 +4,7 @@ import { config } from 'config/config';
 import { Bike } from 'types/bike.type';
 import { User } from 'types/user.type';
 import { Reservation } from 'types/reservation.type';
+import { Rating } from 'types/rating.type';
 import { api } from './api';
 
 export interface ReservationOutput extends Reservation {
@@ -114,6 +115,7 @@ export function updateReservation({
 
 export interface MyReservation extends Pick<Reservation, 'id' | 'periodOfTime'> {
   bike: Bike;
+  rating?: Rating['rating'];
 }
 
 export function getMyReservations(): Promise<{ myReservations: MyReservation[] }> {
@@ -123,6 +125,7 @@ export function getMyReservations(): Promise<{ myReservations: MyReservation[] }
         id
         periodOfTime
         bike
+        rating
       }
     }
   `;
