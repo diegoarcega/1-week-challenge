@@ -1,3 +1,4 @@
+import { Bike } from 'types/bike.type';
 import { v4 as uuid } from 'uuid';
 import { getRandom } from './helpers';
 
@@ -14,9 +15,10 @@ export function createRandomBikes(amount: number) {
   for (let i = 0; i <= amount; i += 1) {
     bikes.push({
       id: uuid(),
-      model: getRandom(models),
-      color: getRandom(colors),
-      location: getRandom(locations),
+      model: getRandom(models) as Bike['model'],
+      color: getRandom(colors) as Bike['color'],
+      location: getRandom(locations) as Bike['location'],
+      status: 'available' as string,
     });
   }
 

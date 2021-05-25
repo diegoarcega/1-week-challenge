@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import { IoIosArrowBack } from 'react-icons/io';
-import { Box, Button, ButtonGroup, useToast, IconButton } from '@chakra-ui/react';
+import { Box, Button, ButtonGroup, useToast, IconButton, Select } from '@chakra-ui/react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useMutation, useQueryClient } from 'react-query';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -21,6 +21,7 @@ const schema = yup.object().shape({
   model: createRequiredSchema('model'),
   color: createRequiredSchema('color'),
   location: createRequiredSchema('location'),
+  status: createRequiredSchema('status'),
 });
 
 export const BikeCreatePage = (): JSX.Element => {
@@ -143,6 +144,15 @@ export const BikeCreatePage = (): JSX.Element => {
                 placeholder="55 Marino St, San Diego, CA, USA"
                 error={errors?.location?.message}
               />
+            }
+          />
+          <Property
+            label="Availability"
+            value={
+              <Select {...register('status')} name="status">
+                <option value="available">Available</option>
+                <option value="unavailable">Unavailable</option>
+              </Select>
             }
           />
         </CardContent>

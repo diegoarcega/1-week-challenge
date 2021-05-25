@@ -52,10 +52,10 @@ function DataTable({ columns, data }: DataTableProps) {
             <Td>{d.bike.model}</Td>
             <Td>{JSON.stringify(d.periodOfTime, null, 2)}</Td>
             <Td>
-              <Flex alignItems="center">
+              <Flex justifyItems="flex-start" flexDirection="column">
                 <RatingComponent onChange={d.onRateChange} value={d.rating} edit={d.rating === undefined} />
-                <Button variant="solid" onClick={d.onCancelReservation} size="sm">
-                  cancel
+                <Button onClick={d.onCancelReservation} size="sm" variant="link" mt="3" w="140px">
+                  Cancel reservation
                 </Button>
               </Flex>
             </Td>

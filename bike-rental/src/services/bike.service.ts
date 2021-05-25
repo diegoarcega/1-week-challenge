@@ -10,6 +10,7 @@ export function getAllBikes(): Promise<{ bikes: Bike[] }> {
         model
         color
         location
+        status
       }
     }
   `;
@@ -19,19 +20,20 @@ export function getAllBikes(): Promise<{ bikes: Bike[] }> {
 
 export type CreateBikeInput = Omit<Bike, 'id'>;
 
-export function createBike({ model, color, location }: CreateBikeInput): Promise<{ bike: Bike }> {
+export function createBike({ model, color, location, status }: CreateBikeInput): Promise<{ bike: Bike }> {
   const query = gql`
-    mutation CreateBike($model: String!, $color: String!, $location: String!) {
+    mutation CreateBike($model: String!, $color: String!, $location: String!, $status: String!) {
       bike {
         id
         model
         color
         location
+        status
       }
     }
   `;
 
-  const variables = { model, color, location };
+  const variables = { model, color, location, status };
   return api({ query, variables });
 }
 
@@ -54,6 +56,7 @@ export function editBike(bike: Bike): Promise<{ bike: Bike }> {
       model: String!
       color: String!
       location: String!
+      status: String!
     }
 
     mutation EditBike($bike: Bike) {
@@ -62,6 +65,7 @@ export function editBike(bike: Bike): Promise<{ bike: Bike }> {
         model
         color
         location
+        status
       }
     }
   `;
@@ -81,6 +85,7 @@ export function getBike(bikeId: Bike['id']): Promise<{ bike: Bike }> {
         model
         color
         location
+        status
       }
     }
   `;

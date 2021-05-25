@@ -12,7 +12,7 @@ const data = {
   name: 'Yellow Tr',
 };
 
-interface BikeCardProps extends Omit<Bike, 'id'> {
+interface BikeCardProps extends Omit<Bike, 'id' | 'status'> {
   onReserve: () => void;
   ratingAverage?: Rating['rating'];
 }
@@ -30,7 +30,7 @@ function BikeCard({ model, color, location, onReserve, ratingAverage }: BikeCard
       >
         {data.isNew && <Circle size="10px" position="absolute" top={2} right={2} bg="red.200" />}
         <Box maxW="full">
-          <Image src={data.imageURL} alt={`Picture of ${data.name}`} roundedTop="lg" />
+          <Image src={data.imageURL} alt={`Picture of a ${color} ${model}`} roundedTop="lg" />
         </Box>
 
         <Box p="6">

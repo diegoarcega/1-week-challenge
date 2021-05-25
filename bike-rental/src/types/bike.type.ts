@@ -3,4 +3,5 @@ export interface Bike {
   model: string;
   color: string;
   location: string;
+  status: 'available' | 'unavailable';
 }

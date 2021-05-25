@@ -16,6 +16,7 @@ import {
   PopoverCloseButton,
   VStack,
   Text,
+  Select,
 } from '@chakra-ui/react';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -32,12 +33,13 @@ import { Bike } from 'types/bike.type';
 import { useUserStore } from 'stores/user.store';
 import { deleteBike, editBike, getBike } from 'services/bike.service';
 
-type FormInput = Pick<Bike, 'model' | 'color' | 'location'>;
+type FormInput = Omit<Bike, 'id'>;
 
 const schema = yup.object().shape({
   model: createRequiredSchema('model'),
   color: createRequiredSchema('color'),
   location: createRequiredSchema('location'),
+  status: createRequiredSchema('status'),
 });
 
 export const BikeDetailPage = (): JSX.Element => {
@@ -222,6 +224,19 @@ export const BikeDetailPage = (): JSX.Element => {
                   />
                 ) : (
                   data?.bike?.location
+                )
+              }
+            />
+            <Property
+              label="Availability"
+              value={
+                isEdit ? (
+                  <Select {...register('status')} name="status" defaultValue={data?.bike?.status}>
+                    <option value="available">Available</option>
+                    <option value="unavailable">Unavailable</option>
+                  </Select>
+                ) : (
+                  data?.bike?.status
                 )
               }
             />

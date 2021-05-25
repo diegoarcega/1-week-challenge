@@ -35,9 +35,9 @@ const USERS_DATABASE_KEY = 'users'; // id, name, email, password, roles
 const BIKES_DATABASE_KEY = 'bikes'; // id, mode, color, location
 const RATINGS_DATABASE_KEY = 'ratings'; // id, userId, bikeId, rating
 const ALL_RESERVATIONS_DATABASE_KEY = 'all-reservations'; // id, userId, bikeId, periodOfTime // created by the user
-const OPEN_RESERVATIONS_COMBINATION = 'open-reservations'; // bikeId, rating, periodOfTime - fetch all BIKES_DATABASE_KEY
+// const OPEN_RESERVATIONS_COMBINATION = 'open-reservations'; // bikeId, rating, periodOfTime - fetch all BIKES_DATABASE_KEY
 // combine with RATINGS_DATABASE_KEY getting its avg, combine it with ALL_RESERVATIONS_DATABASE_KEY ang get the dates the bikes are busy
-const MY_RESERVATIONS_COMBINATION = 'my-reservations'; // fetch all ALL_RESERVATIONS_DATABASE_KEY with a userId
+// const MY_RESERVATIONS_COMBINATION = 'my-reservations'; // fetch all ALL_RESERVATIONS_DATABASE_KEY with a userId
 // and combine it with BIKES_DATABASE_KEY and RATINGS_DATABASE_KEY; returns { bike model, periodOfTime, rating }
 
 Storage.setItem(USERS_DATABASE_KEY, USERS);
@@ -73,22 +73,22 @@ function initApp() {
     },
   ];
 
-  const openReservationsWithRating = randomBikes.map((bike) => {
-    const bikeRatings = ratings.filter((rate) => rate.bikeId === bike.id);
-    const ratingSum = bikeRatings.reduce((acc, item) => acc + item.rating, 0);
-    return {
-      bike,
-      ratingAverage: bikeRatings.length === 0 ? null : ratingSum / bikeRatings.length,
-    };
-  });
-
-  // TODO: combine openReservations with  ALL RESERVATIONS
-  Storage.setItem(OPEN_RESERVATIONS_COMBINATION, openReservationsWithRating);
   Storage.setItem(BIKES_DATABASE_KEY, randomBikes);
   Storage.setItem(RATINGS_DATABASE_KEY, ratings);
 }
 
 initApp();
+
+function initOpenReservations(bikes: any[], ratings: Rating[]) {
+  return bikes.map((bike) => {
+    const bikeRatings = ratings.filter((rate) => rate.bikeId === bike.id);
+    const ratingSum = bikeRatings.reduce((acc, item) => acc + item.rating, 0);
+    return {
+      bike,
+      ratingAverage: bikeRatings.length === 0 ? undefined : ratingSum / bikeRatings.length,
+    };
+  });
+}
 
 const JWT_SECRET = 'Shhhhhhhhh';
 function createJwtToken(user: User): string {
@@ -123,10 +123,6 @@ function getUserFromToken(req: GraphQLRequest<GraphQLVariables>) {
 
 interface UserDatabase extends User {
   password: string;
-}
-
-interface AuthTokensDatabase {
-  [key: string]: User;
 }
 
 export interface OpenReservation {
@@ -370,7 +366,7 @@ export const handlers = [
         ])
       );
     }
-    const { model, color, location } = req.variables as Pick<Bike, 'model' | 'color' | 'location'>;
+    const { model, color, location, status } = req.variables as Omit<Bike, 'id'>;
 
     const allBikes = Storage.getItem<Bike[]>(BIKES_DATABASE_KEY);
     const bikeAlreadyExists = allBikes.find(
@@ -388,6 +384,7 @@ export const handlers = [
     }
 
     const newBike = {
+      status,
       model,
       color,
       location,
@@ -528,29 +525,17 @@ export const handlers = [
     const { perPage, page, filters, from, to } = req.variables;
 
     // database
-    const openReservations = Storage.getItem<OpenReservation[]>(OPEN_RESERVATIONS_COMBINATION);
+    const allBikes = Storage.getItem<Bike[]>(BIKES_DATABASE_KEY);
     const allRatings = Storage.getItem<Rating[]>(RATINGS_DATABASE_KEY);
-
-    // add ratings
-    const openReservationsWithRating = openReservations.map((reservation) => {
-      const bikeId = reservation.bike.id;
-      const bikeRatings = allRatings.filter((rate) => rate.bikeId === bikeId);
-      const ratingSum = bikeRatings.reduce((acc, item) => acc + item.rating, 0);
-
-      return {
-        ...reservation,
-        bike: reservation.bike,
-        ratingAverage: bikeRatings.length === 0 ? undefined : ratingSum / bikeRatings.length,
-      };
-    });
+    const openReservationsRaw = initOpenReservations(allBikes, allRatings);
+    const openReservationsWithRating = openReservationsRaw.filter(
+      (reservation) => reservation.bike.status === 'available'
+    );
 
     let openReservationsByDate = openReservationsWithRating;
     // filter by date
     // add periodoftime
     // if from to, fetch all reservations and combine, then filter
-    console.log({ from, to });
-    console.log(from !== '');
-    console.log(to !== '');
     if (from !== '' && to !== '') {
       const allReservations = Storage.getItem<Reservation[]>(ALL_RESERVATIONS_DATABASE_KEY);
       openReservationsByDate = openReservationsWithRating.map((openReservation) => {
@@ -568,10 +553,8 @@ export const handlers = [
         to,
         results: openReservationsByDate as OpenReservation[],
       });
-      console.log('calculating', openReservationsByDate);
     }
 
-    console.log({ openReservationsByDate });
     return res(
       ctx.data({
         openReservations: withPaginationAndFiltering({
@@ -772,7 +755,6 @@ function withFilters({ filters, results }: Pick<PaginationAndFiltering, 'filters
 
     return Object.entries(filters).some(([filterKey, filterValue]) => {
       const resultValue = get(result, filterKey) as string | number;
-      console.log({ result, filterKey, filterValue, resultValue });
 
       if (!filterValue) {
         return true;
