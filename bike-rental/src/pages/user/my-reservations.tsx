@@ -19,7 +19,6 @@ import {
   Flex,
 } from '@chakra-ui/react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { getUser } from 'utils/user';
 import { MyReservation, getMyReservations, updateReservation, UpdateReservation } from 'services/reservation.service';
 import { Rating as RatingComponent } from 'components/rating/rating';
 import { rateBike, RateBikeInput } from 'services/rating.service';
@@ -103,7 +102,7 @@ export const MyReservationsPage = (): JSX.Element => {
       },
     }
   );
-  const { mutate: rateBikeMutation, error: bikeMutationError } = useMutation(
+  const { mutate: rateBikeMutation, error: rateBikeMutationError } = useMutation(
     (updateVariables: RateBikeInput) => {
       return rateBike(updateVariables);
     },
@@ -137,7 +136,7 @@ export const MyReservationsPage = (): JSX.Element => {
   );
 
   useEffect(() => {
-    if (mutationError) {
+    if (mutationError || rateBikeMutationError) {
       toast({
         title: 'Error',
         description: 'We could not process this request',
@@ -150,7 +149,7 @@ export const MyReservationsPage = (): JSX.Element => {
 
       onClose();
     }
-  }, [mutationError, toast, onClose]);
+  }, [mutationError, rateBikeMutationError, toast, onClose]);
 
   if (isLoading) {
     return <h1>'loading'</h1>;

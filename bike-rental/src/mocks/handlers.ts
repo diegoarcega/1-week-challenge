@@ -79,6 +79,7 @@ function initApp() {
 
 initApp();
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function initOpenReservations(bikes: any[], ratings: Rating[]) {
   return bikes.map((bike) => {
     const bikeRatings = ratings.filter((rate) => rate.bikeId === bike.id);

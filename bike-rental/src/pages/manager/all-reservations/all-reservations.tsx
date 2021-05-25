@@ -2,7 +2,6 @@ import React from 'react';
 import { Table, Thead, Tbody, Tr, Th, Td } from '@chakra-ui/react';
 import { useQuery } from 'react-query';
 import { getAllReservations, ReservationOutput } from 'services/reservation.service';
-import { getUser } from 'utils/user';
 import { useUserStore } from 'stores/user.store';
 
 const COLUMNS = ['user', 'bike', 'period of time'];

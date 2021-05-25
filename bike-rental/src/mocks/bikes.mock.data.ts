@@ -10,6 +10,7 @@ export const locations = [
   '34 Kennedy St, Miami, CA, USA',
 ];
 
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function createRandomBikes(amount: number) {
   const bikes = [];
   for (let i = 0; i <= amount; i += 1) {

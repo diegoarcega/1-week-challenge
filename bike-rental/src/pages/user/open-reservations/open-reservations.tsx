@@ -62,12 +62,9 @@ export const OpenReservationsPage = (): JSX.Element | null => {
     page,
   };
   const cacheKey = ['open-reservations', queryParams, user?.id];
-  const { data, error, isLoading } = useQuery<{ openReservations: PaginationAndFilteringOutput<OpenReservation> }>(
-    cacheKey,
-    () => {
-      return getOpenReservations(queryParams);
-    }
-  );
+  const { data } = useQuery<{ openReservations: PaginationAndFilteringOutput<OpenReservation> }>(cacheKey, () => {
+    return getOpenReservations(queryParams);
+  });
 
   const { mutate: searchMutation, isLoading: isSearching } = useMutation(
     (queryParamsVariable: QueryParams) => {
