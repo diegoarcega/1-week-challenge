@@ -132,7 +132,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
 
     if (filterKey) {
       query.filters = {
-        [filterKey]: filterValue,
+        [filterKey]: filterKey === 'ratingAverage' && filterValue ? Number(filterValue) : filterValue,
       };
     }
 
@@ -206,7 +206,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
                     <option value="bike.model">Model</option>
                     <option value="bike.color">Color</option>
                     <option value="bike.location">Location</option>
-                    <option value="rating">Rating</option>
+                    <option value="ratingAverage">Rating</option>
                   </Select>
                 </InputGroup>
               </FormControl>

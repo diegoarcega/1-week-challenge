@@ -736,7 +736,7 @@ export const handlers = [
 ];
 
 export interface PaginationAndFiltering {
-  filters: { [key: string]: string };
+  filters: { [key: string]: string | number };
   perPage: number;
   page: number;
   results: OpenReservationsWithPaginator[];
@@ -771,7 +771,22 @@ function withFilters({ filters, results }: Pick<PaginationAndFiltering, 'filters
     }
 
     return Object.entries(filters).some(([filterKey, filterValue]) => {
-      return (get(result, filterKey) as string).includes(filterValue);
+      const resultValue = get(result, filterKey) as string | number;
+      console.log({ result, filterKey, filterValue, resultValue });
+
+      if (!filterValue) {
+        return true;
+      }
+
+      if (typeof resultValue === 'number') {
+        return Math.floor(resultValue) === filterValue;
+      }
+
+      if (typeof resultValue === 'string') {
+        return resultValue.includes(filterValue as string);
+      }
+
+      return false;
     });
   });
 
