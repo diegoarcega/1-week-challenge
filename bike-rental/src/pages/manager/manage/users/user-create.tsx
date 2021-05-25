@@ -17,8 +17,8 @@ import passwordSchema from 'validations/password';
 import { GraphQLError } from 'types/error.type';
 import { User } from 'types/user.type';
 import { CreateUser, createUser } from 'services/user.service';
+import { useUserStore } from 'stores/user.store';
 
-const cacheKey = ['users'];
 const schema = yup.object().shape({
   name: createRequiredSchema('name'),
   email: emailSchema,
@@ -29,6 +29,8 @@ export const UserCreatePage = (): JSX.Element => {
   const queryClient = useQueryClient();
   const history = useHistory();
   const toast = useToast();
+  const userData = useUserStore((state) => state.user);
+  const cacheKey = ['users', userData?.id];
 
   const {
     mutate,

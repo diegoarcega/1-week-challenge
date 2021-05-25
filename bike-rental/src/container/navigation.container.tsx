@@ -99,7 +99,9 @@ export default function Navigation({ options }: Props): JSX.Element {
                 {user?.name}
               </MenuButton>
               <MenuList>
-                <MenuItem>My account</MenuItem>
+                <MenuItem as={NavLink} to="my-account">
+                  My account
+                </MenuItem>
                 <MenuDivider />
                 <MenuItem onClick={handleLogout}>Log out</MenuItem>
               </MenuList>

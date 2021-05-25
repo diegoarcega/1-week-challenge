@@ -9,6 +9,7 @@ import { ReservationsPage } from 'pages/manager/all-reservations/all-reservation
 import { UserCreatePage } from 'pages/manager/manage/users/user-create';
 import { BikeCreatePage } from 'pages/manager/manage/bikes/bike.create';
 import { BikeDetailPage } from 'pages/manager/manage/bikes/bike-detail';
+import { MyAccountPage } from 'pages/my-account';
 
 const NAV_ITEMS: NavItem[] = [
   {
@@ -64,6 +65,10 @@ const ManagerRoutes = ({ match }: RouteComponentProps): JSX.Element => {
 
           <Route path={`${match.path}/all-reservations`}>
             <ReservationsPage />
+          </Route>
+
+          <Route path={`${match.path}/*/my-account`}>
+            <MyAccountPage />
           </Route>
           <Route>
             <Heading>Page not found</Heading>
