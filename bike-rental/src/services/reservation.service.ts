@@ -68,15 +68,15 @@ export function getOpenReservations({ from, to, perPage, page, filters }: GetOpe
   return api({ query, variables });
 }
 
-export type ReserveInput = Omit<Reservation, 'id' | 'status'>;
-export function reserve({ userId, bikeId, periodOfTime }: ReserveInput): Promise<{ newReservation: Reservation }> {
+export type ReserveInput = Omit<Reservation, 'id' | 'status' | 'userId'>;
+export function reserve({ bikeId, periodOfTime }: ReserveInput): Promise<{ newReservation: Reservation }> {
   const query = gql`
     type PeriodOfTime {
       from: String!
       to: String!
     }
 
-    mutation Reserve($userId: String!, $bikeId: String!, $periodOfTime: PeriodOfTime!) {
+    mutation Reserve($bikeId: String!, $periodOfTime: PeriodOfTime!) {
       reservation {
         id
       }
@@ -84,7 +84,6 @@ export function reserve({ userId, bikeId, periodOfTime }: ReserveInput): Promise
   `;
 
   const variables = {
-    userId,
     bikeId,
     periodOfTime,
   };

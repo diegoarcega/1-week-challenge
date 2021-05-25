@@ -3,6 +3,7 @@ import { Table, Thead, Tbody, Tr, Th, Td } from '@chakra-ui/react';
 import { useQuery } from 'react-query';
 import { getAllReservations, ReservationOutput } from 'services/reservation.service';
 import { getUser } from 'utils/user';
+import { useUserStore } from 'stores/user.store';
 
 const COLUMNS = ['user', 'bike', 'period of time'];
 
@@ -36,9 +37,10 @@ function DataTable({ columns, data }: DataTableProps) {
   );
 }
 
-const cacheKey = ['allReservations', getUser().id];
 // TODO: filter by user and by bike
 export const ReservationsPage = (): JSX.Element => {
+  const user = useUserStore((state) => state.user);
+  const cacheKey = ['allReservations', user?.id];
   const { data, error, isLoading } = useQuery<{ allReservations: ReservationOutput[] }>(cacheKey, getAllReservations);
 
   if (isLoading) {

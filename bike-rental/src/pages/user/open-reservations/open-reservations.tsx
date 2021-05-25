@@ -27,7 +27,7 @@ import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { getOpenReservations, reserve, ReserveInput } from 'services/reservation.service';
 import { OpenReservation, PaginationAndFilteringOutput } from 'mocks/handlers';
 import { BikeCard } from 'pages/user/open-reservations/bike-card/bike-card';
-import { getUser } from 'utils/user';
+import { useUserStore } from 'stores/user.store';
 
 // TODO: DONT NEED TO BE LOGGED IN
 interface QueryParams {
@@ -47,6 +47,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
   const searchByFromRef = useRef<HTMLInputElement | null>(null);
   const searchByToRef = useRef<HTMLInputElement | null>(null);
   const selectedOpenReservation = useRef<OpenReservation | null>(null);
+  const user = useUserStore((state) => state.user);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -60,7 +61,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
     ...queryParamsRef.current,
     page,
   };
-  const cacheKey = ['open-reservations', queryParams, getUser().id];
+  const cacheKey = ['open-reservations', queryParams, user?.id];
   const { data, error, isLoading } = useQuery<{ openReservations: PaginationAndFilteringOutput<OpenReservation> }>(
     cacheKey,
     () => {
@@ -84,7 +85,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
     }
   );
 
-  const { mutate: reserveMutatation, isLoading: isReserving } = useMutation(
+  const { mutate: reserveMutation, isLoading: isReserving } = useMutation(
     (variables: ReserveInput) => {
       return reserve(variables);
     },
@@ -108,8 +109,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
 
     if (!bikeId || !from || !to) return;
 
-    reserveMutatation({
-      userId: getUser().id,
+    reserveMutation({
       bikeId,
       periodOfTime: {
         from,

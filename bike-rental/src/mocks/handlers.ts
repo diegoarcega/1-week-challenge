@@ -685,7 +685,6 @@ export const handlers = [
     );
   }),
   graphql.mutation('Reserve', (req, res, ctx) => {
-    const { userId, bikeId, periodOfTime } = req.variables;
     try {
       hasAuthTokenExpired(req);
     } catch {
@@ -698,9 +697,12 @@ export const handlers = [
       );
     }
 
+    const { bikeId, periodOfTime } = req.variables;
+    const user = getUserFromToken(req);
+
     const newReservation: Reservation = {
       id: uuid(),
-      userId,
+      userId: user.id,
       bikeId,
       periodOfTime,
       status: 'active',

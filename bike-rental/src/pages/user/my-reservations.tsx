@@ -24,9 +24,10 @@ import { MyReservation, getMyReservations, updateReservation, UpdateReservation 
 import { Rating as RatingComponent } from 'components/rating/rating';
 import { rateBike, RateBikeInput } from 'services/rating.service';
 import { Rating } from 'types/rating.type';
+import { useUserStore } from 'stores/user.store';
 
 const COLUMNS = ['bike', 'period of time', 'action'];
-const cacheKey = ['my-reservations', getUser().id];
+
 interface DataTableProps {
   columns: string[];
   data: (MyReservation & {
@@ -66,6 +67,8 @@ function DataTable({ columns, data }: DataTableProps) {
 }
 
 export const MyReservationsPage = (): JSX.Element => {
+  const user = useUserStore((state) => state.user);
+  const cacheKey = ['my-reservations', user?.id];
   const { data, error, isLoading } = useQuery<{ myReservations: MyReservation[] }>(cacheKey, getMyReservations);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = useRef<HTMLButtonElement | null>(null);
