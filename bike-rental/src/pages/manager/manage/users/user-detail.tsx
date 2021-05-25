@@ -21,7 +21,7 @@ import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { editUser, getUser, deleteUser } from 'services/user.service';
+import { editUser, getUser, deleteUser, EditUserInput } from 'services/user.service';
 import { Card } from 'components/card/card';
 import { CardHeader } from 'components/card/card.header';
 import { CardContent } from 'components/card/card.content';
@@ -32,11 +32,14 @@ import { RequestStatus } from 'components/request-status/request-status';
 import createRequiredSchema from 'validations/required';
 import emailSchema from 'validations/email';
 
-type FormInput = Pick<User, 'name' | 'email' | 'roles'>;
+interface FormInput extends Pick<User, 'name' | 'email'> {
+  roles: string;
+}
 
 const schema = yup.object().shape({
   name: createRequiredSchema('name'),
   email: emailSchema,
+  roles: createRequiredSchema('roles'),
 });
 
 export const UserDetailPage = (): JSX.Element => {
@@ -52,12 +55,12 @@ export const UserDetailPage = (): JSX.Element => {
   });
 
   const { mutate, error: mutationError } = useMutation(
-    ({ user }: { user: User }) => {
+    ({ user }: { user: EditUserInput }) => {
       return editUser(user);
     },
     {
       onSuccess: (dataSuccess, { user }) => {
-        queryClient.setQueryData<{ user: User } | undefined>(cacheKey, (oldData) => {
+        queryClient.setQueryData<{ user: EditUserInput } | undefined>(cacheKey, (oldData) => {
           return oldData
             ? {
                 user,
@@ -213,7 +216,12 @@ export const UserDetailPage = (): JSX.Element => {
               label="roles"
               value={
                 isEdit ? (
-                  <Input register={register} name="roles" defaultValue={getUserRoles(data)} />
+                  <Input
+                    register={register}
+                    name="roles"
+                    defaultValue={getUserRoles(data)}
+                    error={errors?.roles?.message}
+                  />
                 ) : (
                   getUserRoles(data)
                 )

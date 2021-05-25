@@ -26,7 +26,7 @@ const USERS = [
     name: 'Diego Normal',
     email: 'diego.normal@gmail.com',
     password: '11111111',
-    roles: [],
+    roles: ['user'],
   },
 ];
 
@@ -244,9 +244,8 @@ export const handlers = [
     );
   }),
   graphql.mutation('CreateAccount', (req, res, ctx) => {
-    const { name, email, password, roles } = req.variables as Pick<User, 'name' | 'email'> & {
+    const { name, email, password } = req.variables as Pick<User, 'name' | 'email'> & {
       password: string;
-      roles?: string;
     };
     const users = Storage.getItem<UserDatabase[]>(USERS_DATABASE_KEY);
     const userAlreadyExists = users.find((u) => u.email === email);
@@ -262,7 +261,7 @@ export const handlers = [
     }
 
     const newUser = {
-      roles: roles ? roles.replace(' ', '').split(',') : [],
+      roles: ['user'],
       name,
       email,
       id: uuid(),

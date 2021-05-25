@@ -84,7 +84,11 @@ export function deleteUser(userId: User['id']): Promise<{ users: User[] }> {
   );
 }
 
-export function editUser(user: User): Promise<{ user: User }> {
+export interface EditUserInput extends Omit<User, 'roles'> {
+  roles?: string;
+}
+
+export function editUser(user: EditUserInput): Promise<{ user: User }> {
   return request(
     config.baseApiUrl,
     gql`

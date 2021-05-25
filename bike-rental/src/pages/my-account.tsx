@@ -6,7 +6,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { editUser, getUser } from 'services/user.service';
+import { editUser, EditUserInput, getUser } from 'services/user.service';
 import { Card } from 'components/card/card';
 import { CardHeader } from 'components/card/card.header';
 import { CardContent } from 'components/card/card.content';
@@ -39,13 +39,16 @@ export const MyAccountPage = (): JSX.Element => {
   });
 
   const { mutate, error: mutationError } = useMutation(
-    ({ user }: { user: User }) => {
+    ({ user }: { user: EditUserInput }) => {
       return editUser(user);
     },
     {
       onSuccess: (dataSuccess, { user }) => {
-        setUser(user);
-        queryClient.setQueryData<{ user: User } | undefined>(cacheKey, (oldData) => {
+        setUser({
+          ...user,
+          roles: user.roles ? user.roles?.split(',') : [],
+        });
+        queryClient.setQueryData<{ user: EditUserInput } | undefined>(cacheKey, (oldData) => {
           return oldData
             ? {
                 user,
@@ -81,7 +84,7 @@ export const MyAccountPage = (): JSX.Element => {
     setEdit((_isEdit) => !_isEdit);
   }
 
-  const onSubmit: SubmitHandler<FormInput> = async (formData) => {
+  const onSubmit: SubmitHandler<EditUserInput> = async (formData) => {
     mutate({
       user: {
         ...formData,
