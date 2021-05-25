@@ -99,7 +99,10 @@ export default function Navigation({ options }: Props): JSX.Element {
                 {user?.name}
               </MenuButton>
               <MenuList>
-                <MenuItem as={NavLink} to="my-account">
+                <MenuItem
+                  as={NavLink}
+                  to={user?.roles.includes('manager') ? '/manager/my-account' : '/dashboard/my-account'}
+                >
                   My account
                 </MenuItem>
                 <MenuDivider />
@@ -217,8 +220,8 @@ function MobileNavItem({ label, children, href }: NavItem) {
     <Stack spacing={4} onClick={children && onToggle}>
       <Flex
         py={2}
-        as={Link}
-        href={href ?? '#'}
+        as={NavLink}
+        to={href ?? '#'}
         justify="space-between"
         align="center"
         _hover={{

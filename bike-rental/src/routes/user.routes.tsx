@@ -1,4 +1,5 @@
 import { Container, Heading } from '@chakra-ui/react';
+import { MyAccountPage } from 'pages/my-account';
 import React from 'react';
 import { Route, RouteComponentProps, Switch } from 'react-router-dom';
 import Navigation, { NavItem } from '../container/navigation.container';
@@ -29,6 +30,11 @@ const UserRoutes = ({ match }: RouteComponentProps): JSX.Element => {
           <Route path={`${match.path}/reservations`} exact>
             <MyReservationsPage />
           </Route>
+
+          <Route path={`${match.path}/my-account`} exact>
+            <MyAccountPage />
+          </Route>
+
           <Route>
             <Heading>Page not found</Heading>
           </Route>

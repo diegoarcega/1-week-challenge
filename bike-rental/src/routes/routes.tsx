@@ -1,5 +1,4 @@
 import { Center, Spinner } from '@chakra-ui/react';
-import { MyAccountPage } from 'pages/my-account';
 import React, { Suspense } from 'react';
 import { Route, Switch, Redirect, RouteComponentProps } from 'react-router-dom';
 import { LoginPage } from '../pages/login';

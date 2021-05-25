@@ -67,7 +67,7 @@ const ManagerRoutes = ({ match }: RouteComponentProps): JSX.Element => {
             <ReservationsPage />
           </Route>
 
-          <Route path={`${match.path}/*/my-account`}>
+          <Route path={`${match.path}/my-account`}>
             <MyAccountPage />
           </Route>
           <Route>

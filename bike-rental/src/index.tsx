@@ -12,15 +12,15 @@ import App from './app';
 
 export const queryClient = new QueryClient();
 
-if (process.env.NODE_ENV === 'development') {
-  /* eslint-disable global-require */
-  /* eslint-disable @typescript-eslint/no-var-requires */
-  const { worker } = require('./mocks/browser');
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  worker.start();
-  /* eslint-enable global-require */
-  /* eslint-enable @typescript-eslint/no-var-requires */
-}
+// if (process.env.NODE_ENV === 'development') {
+/* eslint-disable global-require */
+/* eslint-disable @typescript-eslint/no-var-requires */
+const { worker } = require('./mocks/browser');
+// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+worker.start();
+/* eslint-enable global-require */
+/* eslint-enable @typescript-eslint/no-var-requires */
+// }
 
 const theme = extendTheme({
   styles: {
