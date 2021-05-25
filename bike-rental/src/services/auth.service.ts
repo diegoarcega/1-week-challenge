@@ -26,15 +26,10 @@ export interface CreateAccount extends Pick<User, 'name' | 'email'> {
   password: string;
   roles?: User['roles'];
 }
-export function createAccount({ name, email, password, roles }: CreateAccount): Promise<{ user: User }> {
+export function createAccount({ name, email, password, roles }: CreateAccount): Promise<{ token: string }> {
   const query = gql`
-    mutation CreateUser($name: String!, $email: String!, $password: String!) {
-      user {
-        id
-        name
-        email
-        roles
-      }
+    mutation CreateAccount($name: String!, $email: String!, $password: String!) {
+      token
     }
   `;
 
@@ -45,5 +40,5 @@ export function createAccount({ name, email, password, roles }: CreateAccount): 
     roles,
   };
 
-  return api({ query, variables });
+  return api({ query, variables, isPublic: true });
 }

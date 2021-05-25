@@ -23,6 +23,32 @@ export function getUser(userId: User['id']): Promise<{ user: User }> {
   return api<{ user: User }>({ query, variables });
 }
 
+export interface CreateUser extends Pick<User, 'name' | 'email'> {
+  password: string;
+  roles?: User['roles'];
+}
+
+export function createUser({ name, email, password, roles }: CreateUser): Promise<{ user: User }> {
+  const query = gql`
+    mutation CreateUser($name: String!, $email: String!, $password: String!) {
+      user {
+        id
+        name
+        email
+        roles
+      }
+    }
+  `;
+  const variables = {
+    name,
+    email,
+    password,
+    roles,
+  };
+
+  return api<{ user: User }>({ query, variables });
+}
+
 export function getAllUsers(): Promise<{ users: User[] }> {
   return request(
     config.baseApiUrl,

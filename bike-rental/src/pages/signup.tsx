@@ -6,13 +6,18 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
 import * as yup from 'yup';
-import { Input } from '../components/input/input';
-import emailSchema from '../validations/email';
-import emailConfirmationSchema from '../validations/confirm-email';
-import passwordSchema from '../validations/password';
-import passwordConfirmationSchema from '../validations/confirm-password';
-import { createAccount } from '../services/auth.service';
-import createRequiredSchema from '../validations/required';
+import jwtDecode from 'jwt-decode';
+import { Input } from 'components/input/input';
+import emailSchema from 'validations/email';
+import emailConfirmationSchema from 'validations/confirm-email';
+import passwordSchema from 'validations/password';
+import passwordConfirmationSchema from 'validations/confirm-password';
+import { createAccount } from 'services/auth.service';
+import createRequiredSchema from 'validations/required';
+import * as Storage from 'utils/storage.util';
+import { AUTHENTICATION_TOKEN_KEY } from 'constants/storage.constant';
+import { useUserStore } from 'stores/user.store';
+import { User } from 'types/user.type';
 
 const schema = yup.object().shape({
   name: createRequiredSchema('name'),
@@ -42,11 +47,16 @@ export const CreateAccountPage = (): JSX.Element => {
     resolver: yupResolver(schema),
   });
   const history = useHistory();
+  const setUser = useUserStore((state) => state.setUser);
 
   const onSubmit: SubmitHandler<FormInput> = async ({ email, password, name }) => {
     try {
       clearErrors('formError');
-      await createAccount({ email, password, name });
+      const { token } = await createAccount({ email, password, name });
+      const userFromToken = jwtDecode<{ data: User }>(token);
+      const user = userFromToken.data;
+      setUser(user);
+      Storage.setItem(AUTHENTICATION_TOKEN_KEY, token);
 
       history.push('/dashboard');
     } catch (e) {

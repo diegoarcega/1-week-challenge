@@ -43,9 +43,10 @@ export const LoginPage = (): JSX.Element => {
   const onSubmit: SubmitHandler<FormInput> = async ({ email, password }) => {
     try {
       clearErrors('formError');
-      const { token, user } = await login({ email, password });
+      const { token } = await login({ email, password });
       const userFromToken = jwtDecode<{ data: User }>(token);
-      setUser(userFromToken.data);
+      const user = userFromToken.data;
+      setUser(user);
       Storage.setItem(AUTHENTICATION_TOKEN_KEY, token);
 
       if (user.roles.includes('manager')) {

@@ -8,12 +8,17 @@ import { config } from 'config/config';
 
 const client = new GraphQLClient(config.baseApiUrl);
 interface Api {
+  isPublic?: boolean;
   query: string;
   variables?: Record<string, unknown>;
 }
 
-export function api<T>({ query, variables }: Api): Promise<T> {
+export function api<T>({ query, variables, isPublic }: Api): Promise<T> {
   try {
+    if (isPublic) {
+      return client.request(query, variables);
+    }
+
     const authToken = getValidatedToken();
     return client.request(query, variables, {
       authorization: authToken,

@@ -246,6 +246,41 @@ export const handlers = [
       })
     );
   }),
+  graphql.mutation('CreateAccount', (req, res, ctx) => {
+    const { name, email, password, roles } = req.variables as Pick<User, 'name' | 'email'> & {
+      password: string;
+      roles?: string;
+    };
+    const users = Storage.getItem<UserDatabase[]>(USERS_DATABASE_KEY);
+    const userAlreadyExists = users.find((u) => u.email === email);
+
+    if (userAlreadyExists) {
+      return res(
+        ctx.errors([
+          {
+            message: 'User already exists',
+          },
+        ])
+      );
+    }
+
+    const newUser = {
+      roles: roles ? roles.replace(' ', '').split(',') : [],
+      name,
+      email,
+      id: uuid(),
+    };
+
+    Storage.setItem(USERS_DATABASE_KEY, users.concat({ ...newUser, password }));
+
+    const authToken = createJwtToken(newUser);
+
+    return res(
+      ctx.data({
+        token: authToken,
+      })
+    );
+  }),
   graphql.mutation('EditUser', (req, res, ctx) => {
     try {
       hasAuthTokenExpired(req);
@@ -281,17 +316,6 @@ export const handlers = [
     );
   }),
   graphql.mutation('LoginUser', (req, res, ctx) => {
-    try {
-      hasAuthTokenExpired(req);
-    } catch {
-      return res(
-        ctx.errors([
-          {
-            message: 'Session has expired',
-          },
-        ])
-      );
-    }
     const { email, password } = req.variables as Pick<User, 'email'> & { password: string };
     const users = Storage.getItem<UserDatabase[]>(USERS_DATABASE_KEY);
     const foundUser = users.find((u) => u.email === email && u.password === password);
@@ -307,19 +331,10 @@ export const handlers = [
     }
 
     const authToken = createJwtToken(foundUser);
-    const authTokens: AuthTokensDatabase[] = Storage.getItem(AUTH_TOKENS_DATABASE_KEY);
-    Storage.setItem(
-      AUTH_TOKENS_DATABASE_KEY,
-      authTokens.concat({
-        [authToken]: foundUser,
-      })
-    );
 
-    // TODO: send only the token and decode it in FE
     return res(
       ctx.data({
         token: authToken,
-        user: foundUser,
       })
     );
   }),

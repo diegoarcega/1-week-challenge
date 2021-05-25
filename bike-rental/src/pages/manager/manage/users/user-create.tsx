@@ -11,12 +11,12 @@ import { CardHeader } from 'components/card/card.header';
 import { CardContent } from 'components/card/card.content';
 import { Property } from 'components/card/card.property';
 import { Input } from 'components/input/input';
-import { CreateAccount, createAccount } from 'services/auth.service';
 import createRequiredSchema from 'validations/required';
 import emailSchema from 'validations/email';
 import passwordSchema from 'validations/password';
 import { GraphQLError } from 'types/error.type';
 import { User } from 'types/user.type';
+import { CreateUser, createUser } from 'services/user.service';
 
 const cacheKey = ['users'];
 const schema = yup.object().shape({
@@ -35,8 +35,8 @@ export const UserCreatePage = (): JSX.Element => {
     error: mutationError,
     data,
   } = useMutation(
-    ({ user }: { user: CreateAccount }) => {
-      return createAccount(user);
+    ({ user }: { user: CreateUser }) => {
+      return createUser(user);
     },
     {
       onSuccess: (dataSuccess) => {
@@ -53,7 +53,7 @@ export const UserCreatePage = (): JSX.Element => {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<CreateAccount>({
+  } = useForm<CreateUser>({
     resolver: yupResolver(schema),
   });
 
@@ -92,7 +92,7 @@ export const UserCreatePage = (): JSX.Element => {
     history.push('/manager/manage/users');
   }
 
-  const onSubmit: SubmitHandler<CreateAccount> = (formData) => {
+  const onSubmit: SubmitHandler<CreateUser> = (formData) => {
     mutate({
       user: formData,
     });
