@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useHistory } from 'react-router-dom';
 import {
   Table,
   Thead,
@@ -17,6 +18,7 @@ import {
   useDisclosure,
   useToast,
   Flex,
+  Text,
 } from '@chakra-ui/react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { MyReservation, getMyReservations, updateReservation, UpdateReservation } from 'services/reservation.service';
@@ -24,6 +26,8 @@ import { Rating as RatingComponent } from 'components/rating/rating';
 import { rateBike, RateBikeInput } from 'services/rating.service';
 import { Rating } from 'types/rating.type';
 import { useUserStore } from 'stores/user.store';
+import { RequestStatus } from 'components/request-status/request-status';
+import dayjs from 'utils/date.util';
 
 const COLUMNS = ['bike', 'period of time', 'action'];
 
@@ -49,7 +53,9 @@ function DataTable({ columns, data }: DataTableProps) {
         {data.map((d) => (
           <Tr key={d.id}>
             <Td>{d.bike.model}</Td>
-            <Td>{JSON.stringify(d.periodOfTime, null, 2)}</Td>
+            <Td>
+              from {dayjs(d.periodOfTime.from).format('DD/MM/YYYY')} to {dayjs(d.periodOfTime.to).format('DD/MM/YYYY')}
+            </Td>
             <Td>
               <Flex justifyItems="flex-start" flexDirection="column">
                 <RatingComponent onChange={d.onRateChange} value={d.rating} edit={d.rating === undefined} />
@@ -67,6 +73,7 @@ function DataTable({ columns, data }: DataTableProps) {
 
 export const MyReservationsPage = (): JSX.Element => {
   const user = useUserStore((state) => state.user);
+  const history = useHistory();
   const cacheKey = ['my-reservations', user?.id];
   const { data, error, isLoading } = useQuery<{ myReservations: MyReservation[] }>(cacheKey, getMyReservations);
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -151,18 +158,6 @@ export const MyReservationsPage = (): JSX.Element => {
     }
   }, [mutationError, rateBikeMutationError, toast, onClose]);
 
-  if (isLoading) {
-    return <h1>'loading'</h1>;
-  }
-
-  if (!data) {
-    return <h1>'nothing'</h1>;
-  }
-
-  if (error) {
-    return <h1>'error'</h1>;
-  }
-
   function cancelReservation() {
     const reservationId = selectedReservationId.current;
     if (!reservationId) return;
@@ -173,7 +168,7 @@ export const MyReservationsPage = (): JSX.Element => {
     });
   }
 
-  const reservations = data.myReservations.map((reservation) => ({
+  const reservations = data?.myReservations.map((reservation) => ({
     ...reservation,
     onCancelReservation: () => {
       selectedReservationId.current = reservation.id;
@@ -189,7 +184,21 @@ export const MyReservationsPage = (): JSX.Element => {
 
   return (
     <>
-      <DataTable data={reservations} columns={COLUMNS} />
+      <RequestStatus
+        isLoading={isLoading}
+        error={error}
+        data={reservations}
+        noResultsMessage={
+          <Flex justifyContent="center" direction="column" alignItems="center">
+            <Text>You have no reservations</Text>
+            <Button size="lg" variant="solid" colorScheme="blue" mt="5" onClick={() => history.push('/dashboard')}>
+              Reserve now!
+            </Button>
+          </Flex>
+        }
+      >
+        {reservations ? <DataTable data={reservations} columns={COLUMNS} /> : null}
+      </RequestStatus>
       <AlertDialog
         leastDestructiveRef={cancelRef}
         onClose={onClose}

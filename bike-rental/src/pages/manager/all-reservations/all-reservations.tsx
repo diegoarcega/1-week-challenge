@@ -3,6 +3,7 @@ import { Table, Thead, Tbody, Tr, Th, Td } from '@chakra-ui/react';
 import { useQuery } from 'react-query';
 import { getAllReservations, ReservationOutput } from 'services/reservation.service';
 import { useUserStore } from 'stores/user.store';
+import { RequestStatus } from 'components/request-status/request-status';
 
 const COLUMNS = ['user', 'bike', 'period of time'];
 
@@ -42,17 +43,14 @@ export const ReservationsPage = (): JSX.Element => {
   const cacheKey = ['allReservations', user?.id];
   const { data, error, isLoading } = useQuery<{ allReservations: ReservationOutput[] }>(cacheKey, getAllReservations);
 
-  if (isLoading) {
-    return <h1>'loading'</h1>;
-  }
-
-  if (!data) {
-    return <h1>'nothing'</h1>;
-  }
-
-  if (error) {
-    return <h1>'error'</h1>;
-  }
-
-  return <DataTable data={data.allReservations} columns={COLUMNS} />;
+  return (
+    <RequestStatus
+      isLoading={isLoading}
+      error={error}
+      data={data?.allReservations}
+      noResultsMessage="There are no reservations in the system"
+    >
+      {data?.allReservations ? <DataTable data={data.allReservations} columns={COLUMNS} /> : null}
+    </RequestStatus>
+  );
 };

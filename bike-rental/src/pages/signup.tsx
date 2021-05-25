@@ -68,7 +68,7 @@ export const CreateAccountPage = (): JSX.Element => {
   };
 
   return (
-    <Stack minH="100vh" direction={{ base: 'column', md: 'row' }} bg="red.800">
+    <Stack minH="100vh" direction={{ base: 'column', md: 'row' }} bgGradient="linear(to-r, #333333, #dd1818)">
       <Flex flex={1}>
         <Image
           alt="Login Image"
