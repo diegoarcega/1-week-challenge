@@ -52,7 +52,9 @@ function DataTable({ columns, data }: DataTableProps) {
       <Tbody>
         {data.map((d) => (
           <Tr key={d.id}>
-            <Td>{d.bike.model}</Td>
+            <Td>
+              {d.bike.color} {d.bike.model}
+            </Td>
             <Td>
               from {dayjs(d.periodOfTime.from).format('DD/MM/YYYY')} to {dayjs(d.periodOfTime.to).format('DD/MM/YYYY')}
             </Td>

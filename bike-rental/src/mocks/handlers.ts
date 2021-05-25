@@ -49,7 +49,7 @@ Storage.setItem(AUTH_TOKENS_DATABASE_KEY, []);
 
 // will start without reservations
 function initApp() {
-  const randomBikes = createRandomBikes(3);
+  const randomBikes = createRandomBikes(15);
   const diegoNormal = USERS[1];
   // rate some bikes
   const ratings = [
@@ -794,16 +794,16 @@ export interface PaginationAndFilteringOutput<T> extends Omit<PaginationAndFilte
 }
 
 function withPaginationAndFiltering({ filters, perPage, page, results }: PaginationAndFiltering) {
-  const pageIndex = page === 1 ? page - 1 : page;
-  const endIndex = page === 1 ? perPage : pageIndex + perPage;
-  const paginatedResults = results.slice(pageIndex, endIndex);
-  const filteredResults = withFilters({ filters, results: paginatedResults });
+  const sliceStart = page === 1 ? 0 : (page - 1) * perPage;
+  const sliceEnd = page === 1 ? perPage : page * perPage;
+  const filteredResults = withFilters({ filters, results });
+  const paginatedResults = filteredResults.slice(sliceStart, sliceEnd);
   const totalPagesFinal = filteredResults.length === 0 ? 1 : Math.ceil(filteredResults.length / perPage);
 
   return {
     perPage,
     page,
-    results: filteredResults,
+    results: paginatedResults,
     totalPages: totalPagesFinal,
     totalResults: filteredResults.length,
   };

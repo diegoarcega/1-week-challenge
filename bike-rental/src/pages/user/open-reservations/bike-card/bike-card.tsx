@@ -1,15 +1,13 @@
 /* eslint-disable react/no-array-index-key */
 import React from 'react';
-import { Flex, Circle, Box, Image, Badge, useColorModeValue, Text, Button } from '@chakra-ui/react';
+import { Flex, Box, Image, useColorModeValue, Text, Button } from '@chakra-ui/react';
 import { Rating as RatingComponent } from 'components/rating/rating';
 import { Bike } from 'types/bike.type';
 import { Rating } from 'types/rating.type';
 
-const data = {
-  isNew: true,
+export const bikeImageSample = {
   imageURL:
     'https://www.10wallpaper.com/wallpaper/1366x768/1710/2017_Triumph_street_cup_Motorcycles_Wallpaper_1366x768.jpg',
-  name: 'Yellow Tr',
 };
 
 interface BikeCardProps extends Omit<Bike, 'id' | 'status'> {
@@ -19,28 +17,28 @@ interface BikeCardProps extends Omit<Bike, 'id' | 'status'> {
 
 function BikeCard({ model, color, location, onReserve, ratingAverage }: BikeCardProps): JSX.Element {
   return (
-    <Flex alignItems="center" justifyContent="center">
-      <Box
+    <Flex justifyContent="center">
+      <Flex
         bg={useColorModeValue('white', 'gray.800')}
-        maxW="sm"
+        maxW="full"
         borderWidth="1px"
         rounded="lg"
         shadow="lg"
         position="relative"
+        flexDirection="column"
       >
-        {data.isNew && <Circle size="10px" position="absolute" top={2} right={2} bg="red.200" />}
-        <Box maxW="full">
-          <Image src={data.imageURL} alt={`Picture of a ${color} ${model}`} roundedTop="lg" />
-        </Box>
+        <Flex
+          maxW="full"
+          minHeight="165px"
+          justifyContent="center"
+          overflow="hidden"
+          roundedTop="lg"
+          backgroundClip="padding-box"
+        >
+          <Image src={bikeImageSample.imageURL} alt={`Picture of a ${color} ${model}`} roundedTop="lg" maxW="full" />
+        </Flex>
 
-        <Box p="6">
-          <Box d="flex" alignItems="baseline">
-            {data.isNew && (
-              <Badge rounded="full" px="2" fontSize="0.8em" colorScheme="yellow">
-                New
-              </Badge>
-            )}
-          </Box>
+        <Flex p="6" direction="column" justifyContent="space-between" h={['auto', 'full']}>
           <Text fontSize="xl" fontWeight="semibold" as="h4" lineHeight="tight" isTruncated casing="uppercase">
             {color} {model}
           </Text>
@@ -57,12 +55,13 @@ function BikeCard({ model, color, location, onReserve, ratingAverage }: BikeCard
                 No reviews yet
               </Text>
             )}
+
+            <Button colorScheme="blue" w="full" onClick={onReserve}>
+              Reserve now!
+            </Button>
           </Box>
-          <Button colorScheme="blue" w="full" onClick={onReserve}>
-            Reserve now!
-          </Button>
-        </Box>
-      </Box>
+        </Flex>
+      </Flex>
     </Flex>
   );
 }

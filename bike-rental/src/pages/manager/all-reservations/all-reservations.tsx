@@ -4,6 +4,7 @@ import { useQuery } from 'react-query';
 import { getAllReservations, ReservationOutput } from 'services/reservation.service';
 import { useUserStore } from 'stores/user.store';
 import { RequestStatus } from 'components/request-status/request-status';
+import dayjs from 'utils/date.util';
 
 const COLUMNS = ['user', 'bike', 'period of time'];
 
@@ -29,7 +30,9 @@ function DataTable({ columns, data }: DataTableProps) {
             <Td>
               {d.bike.color} {d.bike.model}
             </Td>
-            <Td>{`${d.periodOfTime.from} - ${d.periodOfTime.to}`}</Td>
+            <Td>
+              from {dayjs(d.periodOfTime.from).format('DD/MM/YYYY')} to {dayjs(d.periodOfTime.to).format('DD/MM/YYYY')}
+            </Td>
           </Tr>
         ))}
       </Tbody>

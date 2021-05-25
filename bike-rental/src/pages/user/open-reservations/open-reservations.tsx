@@ -23,11 +23,12 @@ import {
   VStack,
   useToast,
   FormErrorMessage,
+  Image,
 } from '@chakra-ui/react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { getOpenReservations, reserve, ReserveInput } from 'services/reservation.service';
 import { OpenReservation, PaginationAndFilteringOutput } from 'mocks/handlers';
-import { BikeCard } from 'pages/user/open-reservations/bike-card/bike-card';
+import { BikeCard, bikeImageSample } from 'pages/user/open-reservations/bike-card/bike-card';
 import { useUserStore } from 'stores/user.store';
 
 // TODO: DONT NEED TO BE LOGGED IN
@@ -176,6 +177,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
   const selectedReservation = selectedOpenReservation?.current;
   return (
     <>
+      {/* TODO: move the filters to its own component */}
       <Box bg="white" p="5">
         <Flex
           as="form"
@@ -238,7 +240,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
           </Flex>
         </Flex>
       </Box>
-      <SimpleGrid columns={[1, 2, 3, 4]} gap="5" py="5">
+      <SimpleGrid columns={[1, 2, 3, 4]} gap="4" py="5">
         {openReservations.map((reservation) => (
           <BikeCard
             key={reservation.bike.id}
@@ -250,7 +252,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
           />
         ))}
       </SimpleGrid>
-      {/* <DataTable data={openReservations} columns={COLUMNS} /> */}
+      {/* TODO: move pagination to a component */}
       <Flex justifyContent={{ base: 'center', sm: 'flex-end' }} mt="5" w="full">
         <ButtonGroup variant="outline" colorScheme="blue" w={['full', 'xs']}>
           <Button onClick={handlePrevious} isDisabled={page === 1} w={['full']}>
@@ -261,27 +263,38 @@ export const OpenReservationsPage = (): JSX.Element | null => {
           </Button>
         </ButtonGroup>
       </Flex>
+      {/* TODO: move Drawer to a component */}
       {selectedReservation && (
         <Drawer isOpen={isOpen} placement="right" size="sm" onClose={onClose}>
           <DrawerOverlay />
           <DrawerContent>
-            <DrawerCloseButton />
-            <DrawerHeader>
+            <DrawerCloseButton color="white" />
+            <DrawerHeader textTransform="uppercase" bg="blue.600" color="white">
               Reserve the {selectedReservation.bike.color} {selectedReservation.bike.model}
             </DrawerHeader>
+            <Image
+              src={bikeImageSample.imageURL}
+              alt={`Picture of a ${selectedReservation.bike.color} ${selectedReservation.bike.model}`}
+              rounded="sm"
+              maxW="full"
+            />
 
-            <DrawerBody>
+            <DrawerBody bg="gray.300">
               <Text as="address">{selectedReservation.bike.location}</Text>
-              <Text>{selectedReservation.ratingAverage}</Text>
+              {selectedReservation.ratingAverage && (
+                <Text fontSize="xs" textTransform="uppercase">
+                  Rating: {selectedReservation.ratingAverage}
+                </Text>
+              )}
 
               <VStack mt="10" spacing="5">
                 <FormControl id="selectedFrom">
                   <FormLabel>From</FormLabel>
-                  <Input ref={fromRef} type="date" />
+                  <Input ref={fromRef} type="date" variant="filled" />
                 </FormControl>
                 <FormControl id="selectedTo">
                   <FormLabel>To</FormLabel>
-                  <Input ref={toRef} type="date" />
+                  <Input ref={toRef} type="date" variant="filled" />
                 </FormControl>
                 <FormControl isInvalid={!!reserveMutationError}>
                   <FormErrorMessage>This bike is already taken for this period of time</FormErrorMessage>

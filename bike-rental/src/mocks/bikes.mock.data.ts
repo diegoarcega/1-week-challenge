@@ -13,7 +13,7 @@ export const locations = [
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function createRandomBikes(amount: number) {
   const bikes = [];
-  for (let i = 0; i <= amount; i += 1) {
+  for (let i = 0; i < amount; i += 1) {
     bikes.push({
       id: uuid(),
       model: getRandom(models) as Bike['model'],
