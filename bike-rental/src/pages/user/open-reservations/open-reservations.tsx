@@ -22,6 +22,7 @@ import {
   FormLabel,
   VStack,
   useToast,
+  FormErrorMessage,
 } from '@chakra-ui/react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { getOpenReservations, reserve, ReserveInput } from 'services/reservation.service';
@@ -40,12 +41,12 @@ interface QueryParams {
 
 export const OpenReservationsPage = (): JSX.Element | null => {
   const [page, setPage] = React.useState(1);
-  const selectRef = useRef<HTMLSelectElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const fromRef = useRef<HTMLInputElement>(null);
-  const toRef = useRef<HTMLInputElement>(null);
-  const searchByFromRef = useRef<HTMLInputElement | null>(null);
-  const searchByToRef = useRef<HTMLInputElement | null>(null);
+  const selectRef = useRef<HTMLSelectElement>(null); // avoid rerender
+  const inputRef = useRef<HTMLInputElement>(null); // avoid rerender
+  const fromRef = useRef<HTMLInputElement>(null); // avoid rerender
+  const toRef = useRef<HTMLInputElement>(null); // avoid rerender
+  const searchByFromRef = useRef<HTMLInputElement | null>(null); // avoid rerender
+  const searchByToRef = useRef<HTMLInputElement | null>(null); // avoid rerender
   const selectedOpenReservation = useRef<OpenReservation | null>(null);
   const user = useUserStore((state) => state.user);
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -82,7 +83,11 @@ export const OpenReservationsPage = (): JSX.Element | null => {
     }
   );
 
-  const { mutate: reserveMutation, isLoading: isReserving } = useMutation(
+  const {
+    mutateAsync: reserveMutation,
+    isLoading: isReserving,
+    error: reserveMutationError,
+  } = useMutation(
     (variables: ReserveInput) => {
       return reserve(variables);
     },
@@ -99,22 +104,25 @@ export const OpenReservationsPage = (): JSX.Element | null => {
     }
   );
 
-  function handleReserve() {
+  async function handleReserve() {
     const bikeId = selectedOpenReservation.current?.bike.id;
     const from = fromRef.current?.value;
     const to = toRef.current?.value;
 
     if (!bikeId || !from || !to) return;
 
-    reserveMutation({
-      bikeId,
-      periodOfTime: {
-        from,
-        to,
-      },
-    });
-
-    onClose();
+    try {
+      await reserveMutation({
+        bikeId,
+        periodOfTime: {
+          from,
+          to,
+        },
+      });
+      onClose();
+    } catch (error) {
+      console.log('date is taken', error);
+    }
   }
 
   function handleSearch(event: React.FormEvent) {
@@ -274,6 +282,9 @@ export const OpenReservationsPage = (): JSX.Element | null => {
                 <FormControl id="selectedTo">
                   <FormLabel>To</FormLabel>
                   <Input ref={toRef} type="date" />
+                </FormControl>
+                <FormControl isInvalid={!!reserveMutationError}>
+                  <FormErrorMessage>This bike is already taken for this period of time</FormErrorMessage>
                 </FormControl>
               </VStack>
             </DrawerBody>

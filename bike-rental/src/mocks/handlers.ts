@@ -708,6 +708,67 @@ export const handlers = [
     };
 
     const allReservations = Storage.getItem<Reservation[]>(ALL_RESERVATIONS_DATABASE_KEY);
+    const isTaken = allReservations
+      .filter((reservation) => reservation.status === 'active')
+      .some((reservation) => {
+        if (reservation.bikeId === bikeId) {
+          const { from, to } = periodOfTime;
+          const { periodOfTime: periodOfTimeOfReservation } = reservation;
+
+          let isFromReserved = false;
+          let isToReserved = false;
+          let isBetweenFrom = false;
+          let isBetweenTo = false;
+
+          if (from === to) {
+            isFromReserved = dayjs(from).isBetween(
+              periodOfTimeOfReservation.from,
+              periodOfTimeOfReservation.to,
+              null,
+              '[]'
+            );
+            isToReserved = dayjs(to).isBetween(
+              periodOfTimeOfReservation.from,
+              periodOfTimeOfReservation.to,
+              null,
+              '[]'
+            );
+          } else {
+            isBetweenFrom = dayjs(periodOfTimeOfReservation.from).isBetween(from, to, null, '[]');
+            isBetweenTo = dayjs(periodOfTimeOfReservation.to).isBetween(from, to, null, '[]');
+
+            isFromReserved = dayjs(from).isBetween(
+              periodOfTimeOfReservation.from,
+              periodOfTimeOfReservation.to,
+              null,
+              '[]'
+            );
+            isToReserved = dayjs(to).isBetween(
+              periodOfTimeOfReservation.from,
+              periodOfTimeOfReservation.to,
+              null,
+              '[]'
+            );
+          }
+
+          // bike is already reserved within the time range
+          if (isBetweenFrom || isBetweenTo || isFromReserved || isToReserved) {
+            return true;
+          }
+        }
+        return false;
+      });
+
+    if (isTaken) {
+      return res(
+        ctx.errors([
+          {
+            message: 'This bike is already taken for that period of time',
+          },
+        ])
+      );
+    }
+
     allReservations.push(newReservation);
     Storage.setItem(ALL_RESERVATIONS_DATABASE_KEY, allReservations);
 
