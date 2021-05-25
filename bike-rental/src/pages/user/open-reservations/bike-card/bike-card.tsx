@@ -1,6 +1,6 @@
 /* eslint-disable react/no-array-index-key */
 import React from 'react';
-import { Flex, Box, Image, useColorModeValue, Text, Button } from '@chakra-ui/react';
+import { Flex, Box, Image, useColorModeValue, Text, Button, Badge } from '@chakra-ui/react';
 import { Rating as RatingComponent } from 'components/rating/rating';
 import { Bike } from 'types/bike.type';
 import { Rating } from 'types/rating.type';
@@ -10,12 +10,12 @@ export const bikeImageSample = {
     'https://www.10wallpaper.com/wallpaper/1366x768/1710/2017_Triumph_street_cup_Motorcycles_Wallpaper_1366x768.jpg',
 };
 
-interface BikeCardProps extends Omit<Bike, 'id' | 'status'> {
+interface BikeCardProps extends Omit<Bike, 'id'> {
   onReserve: () => void;
   ratingAverage?: Rating['rating'];
 }
 
-function BikeCard({ model, color, location, onReserve, ratingAverage }: BikeCardProps): JSX.Element {
+function BikeCard({ model, color, location, status, onReserve, ratingAverage }: BikeCardProps): JSX.Element {
   return (
     <Flex justifyContent="center">
       <Flex
@@ -27,6 +27,11 @@ function BikeCard({ model, color, location, onReserve, ratingAverage }: BikeCard
         position="relative"
         flexDirection="column"
       >
+        {status !== 'available' && (
+          <Box position="absolute" top="1" right="0">
+            <Badge>not available</Badge>
+          </Box>
+        )}
         <Flex
           maxW="full"
           minHeight="165px"
@@ -56,8 +61,8 @@ function BikeCard({ model, color, location, onReserve, ratingAverage }: BikeCard
               </Text>
             )}
 
-            <Button colorScheme="blue" w="full" onClick={onReserve}>
-              Reserve now!
+            <Button colorScheme="blue" w="full" onClick={onReserve} isDisabled={status !== 'available'}>
+              {status === 'available' ? 'Reserve now!' : 'Not available'}
             </Button>
           </Box>
         </Flex>

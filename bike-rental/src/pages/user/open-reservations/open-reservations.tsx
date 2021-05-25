@@ -88,6 +88,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
     mutateAsync: reserveMutation,
     isLoading: isReserving,
     error: reserveMutationError,
+    reset: reserReservationMutation,
   } = useMutation(
     (variables: ReserveInput) => {
       return reserve(variables);
@@ -163,6 +164,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
     openReservations = data?.openReservations.results.map((reservation) => ({
       ...reservation,
       onReserveBike: () => {
+        reserReservationMutation();
         selectedOpenReservation.current = reservation;
         onOpen();
       },
@@ -240,18 +242,25 @@ export const OpenReservationsPage = (): JSX.Element | null => {
           </Flex>
         </Flex>
       </Box>
-      <SimpleGrid columns={[1, 2, 3, 4]} gap="4" py="5">
-        {openReservations.map((reservation) => (
-          <BikeCard
-            key={reservation.bike.id}
-            model={reservation.bike.model}
-            color={reservation.bike.color}
-            location={reservation.bike.location}
-            ratingAverage={reservation.ratingAverage}
-            onReserve={reservation.onReserveBike}
-          />
-        ))}
-      </SimpleGrid>
+      {openReservations.length === 0 ? (
+        <Text textAlign="center" mt="10" fontSize="xl" fontWeight="bold" color="blue.500">
+          No results for this query
+        </Text>
+      ) : (
+        <SimpleGrid columns={[1, 2, 3, 4]} gap="4" py="5">
+          {openReservations.map((reservation) => (
+            <BikeCard
+              key={reservation.bike.id}
+              model={reservation.bike.model}
+              color={reservation.bike.color}
+              location={reservation.bike.location}
+              status={reservation.bike.status}
+              ratingAverage={reservation.ratingAverage}
+              onReserve={reservation.onReserveBike}
+            />
+          ))}
+        </SimpleGrid>
+      )}
       {/* TODO: move pagination to a component */}
       <Flex justifyContent={{ base: 'center', sm: 'flex-end' }} mt="5" w="full">
         <ButtonGroup variant="outline" colorScheme="blue" w={['full', 'xs']}>

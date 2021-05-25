@@ -49,7 +49,7 @@ Storage.setItem(AUTH_TOKENS_DATABASE_KEY, []);
 
 // will start without reservations
 function initApp() {
-  const randomBikes = createRandomBikes(15);
+  const randomBikes = createRandomBikes(5);
   const diegoNormal = USERS[1];
   // rate some bikes
   const ratings = [
@@ -528,10 +528,7 @@ export const handlers = [
     // database
     const allBikes = Storage.getItem<Bike[]>(BIKES_DATABASE_KEY);
     const allRatings = Storage.getItem<Rating[]>(RATINGS_DATABASE_KEY);
-    const openReservationsRaw = initOpenReservations(allBikes, allRatings);
-    const openReservationsWithRating = openReservationsRaw.filter(
-      (reservation) => reservation.bike.status === 'available'
-    );
+    const openReservationsWithRating = initOpenReservations(allBikes, allRatings);
 
     let openReservationsByDate = openReservationsWithRating;
     // filter by date

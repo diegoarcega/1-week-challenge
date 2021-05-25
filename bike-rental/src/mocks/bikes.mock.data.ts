@@ -19,7 +19,7 @@ export function createRandomBikes(amount: number) {
       model: getRandom(models) as Bike['model'],
       color: getRandom(colors) as Bike['color'],
       location: getRandom(locations) as Bike['location'],
-      status: 'available' as string,
+      status: getRandom(['available', 'unavailable']) as string,
     });
   }
 
