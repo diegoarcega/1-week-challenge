@@ -42,7 +42,6 @@ import { Bike } from 'types/bike.type';
 import { Rating } from 'types/rating.type';
 import { useHistory, useLocation } from 'react-router-dom';
 
-// TODO: DONT NEED TO BE LOGGED IN
 interface GetOpenReservations {
   models: {
     [key: string]: number;
@@ -68,6 +67,12 @@ const initialQueryParams = {
 // the source of truth is the URL params
 // the state of this app is tied to the URL params
 // the state is being shared with react-query, all cached
+// TODO: move the filter to its own component
+// TODO: fetch the filter options separately inside the filter component
+// TODO: move the pagination to its own component
+// TODO: backend: combine the filters restricting the search instead of amplifying it
+// TODO: DONT NEED TO BE LOGGED IN (use next.js to prefetch the data)
+// TODO: show/add reservation price per bike
 export const OpenReservationsPage = (): JSX.Element | null => {
   const location = useLocation();
   const locationSearch = queryString.parse(location.search, {
