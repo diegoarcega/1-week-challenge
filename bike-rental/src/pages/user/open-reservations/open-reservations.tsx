@@ -32,23 +32,17 @@ import {
   Center,
   Spinner,
 } from '@chakra-ui/react';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { useMutation, useQuery } from 'react-query';
+import queryString from 'query-string';
 import { getOpenReservations, reserve, ReserveInput } from 'services/reservation.service';
 import { OpenReservation, PaginationAndFilteringOutput } from 'mocks/handlers';
 import { BikeCard, bikeImageSample } from 'pages/user/open-reservations/bike-card/bike-card';
 import { useUserStore } from 'stores/user.store';
 import { Bike } from 'types/bike.type';
 import { Rating } from 'types/rating.type';
+import { useHistory, useLocation } from 'react-router-dom';
 
 // TODO: DONT NEED TO BE LOGGED IN
-interface QueryParams {
-  from: string;
-  to: string;
-  page: number;
-  perPage: number;
-  filters: Record<string, string | string[] | number>;
-}
-
 interface GetOpenReservations {
   models: {
     [key: string]: number;
@@ -63,8 +57,23 @@ export interface SelectedReservation extends Bike {
   ratingAverage: Rating['rating'];
 }
 
+const initialQueryParams = {
+  from: '',
+  to: '',
+  page: 1,
+  perPage: 12,
+  filters: {},
+};
+
+// the source of truth is the URL params
+// the state of this app is tied to the URL params
+// the state is being shared with react-query, all cached
 export const OpenReservationsPage = (): JSX.Element | null => {
-  const [page, setPage] = useState(1);
+  const location = useLocation();
+  const locationSearch = queryString.parse(location.search, {
+    arrayFormat: 'comma',
+  });
+  const pageRef = useRef(1);
   const modelFilterRef = useRef<string[]>([]); // avoid rerender
   const colorFilterRef = useRef<string[]>([]); // avoid rerender
   const locationFilterRef = useRef<HTMLInputElement | null>(null); // avoid rerender
@@ -76,23 +85,26 @@ export const OpenReservationsPage = (): JSX.Element | null => {
   const selectedOpenReservation = useRef<SelectedReservation | null>(null);
   const user = useUserStore((state) => state.user);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const queryClient = useQueryClient();
+  const history = useHistory();
   const toast = useToast();
 
   const searchByFrom = searchByFromRef.current?.value ?? '';
   const searchByTo = searchByToRef.current?.value ?? '';
-  const queryParams = {
-    from: searchByFrom,
-    to: searchByTo,
-    perPage: 12,
-    filters: {
-      ...(modelFilterRef.current.length && { 'bike.model': modelFilterRef.current }),
-      ...(colorFilterRef.current.length && { 'bike.color': colorFilterRef.current }),
-      ...(locationFilterRef.current?.value && { 'bike.location': locationFilterRef.current?.value }),
-      ...(ratingFilterRef.current?.value && { ratingAverage: Number(ratingFilterRef.current?.value) }),
-    },
-    page,
-  };
+  const queryParams =
+    Object.keys(locationSearch).length !== 0
+      ? {
+          from: searchByFrom,
+          to: searchByTo,
+          perPage: 12,
+          filters: {
+            ...(modelFilterRef.current.length && { 'bike.model': modelFilterRef.current }),
+            ...(colorFilterRef.current.length && { 'bike.color': colorFilterRef.current }),
+            ...(locationFilterRef.current?.value && { 'bike.location': locationFilterRef.current?.value }),
+            ...(ratingFilterRef.current?.value && { ratingAverage: Number(ratingFilterRef.current?.value) }),
+          },
+          page: pageRef.current,
+        }
+      : initialQueryParams;
   const cacheKey = ['open-reservations', queryParams, user?.id];
   const { data, isLoading } = useQuery<GetOpenReservations>(
     cacheKey,
@@ -102,22 +114,6 @@ export const OpenReservationsPage = (): JSX.Element | null => {
     {
       keepPreviousData: true,
       refetchOnWindowFocus: false,
-    }
-  );
-
-  const { mutate: searchMutation, isLoading: isSearching } = useMutation(
-    (queryParamsVariable: QueryParams) => {
-      return getOpenReservations(queryParamsVariable);
-    },
-    {
-      onSuccess: (dataSuccess) => {
-        queryClient.setQueryData<{ openReservations: PaginationAndFilteringOutput<OpenReservation> } | undefined>(
-          cacheKey,
-          () => {
-            return dataSuccess;
-          }
-        );
-      },
     }
   );
 
@@ -168,15 +164,14 @@ export const OpenReservationsPage = (): JSX.Element | null => {
   function handleSearch(event: React.FormEvent) {
     event.preventDefault();
     const query = {
-      ...queryParams,
-      page: 1,
-      perPage: 12,
-      filters: {
-        ...(modelFilterRef.current.length && { 'bike.model': modelFilterRef.current }),
-        ...(colorFilterRef.current.length && { 'bike.color': colorFilterRef.current }),
-        ...(locationFilterRef.current?.value && { 'bike.location': locationFilterRef.current?.value }),
-        ...(ratingFilterRef.current?.value && { ratingAverage: Number(ratingFilterRef.current?.value) }),
-      },
+      ...initialQueryParams,
+    };
+
+    const filters = {
+      ...(modelFilterRef.current.length && { 'bike.model': modelFilterRef.current }),
+      ...(colorFilterRef.current.length && { 'bike.color': colorFilterRef.current }),
+      ...(locationFilterRef.current?.value && { 'bike.location': locationFilterRef.current?.value }),
+      ...(ratingFilterRef.current?.value && { ratingAverage: Number(ratingFilterRef.current?.value) }),
     };
 
     const from = searchByFromRef.current?.value;
@@ -187,16 +182,58 @@ export const OpenReservationsPage = (): JSX.Element | null => {
       query.to = to;
     }
 
-    searchMutation(query);
+    const newRoute = queryString.stringify(
+      { ...query, ...filters },
+      {
+        arrayFormat: 'comma',
+        sort: false,
+        encode: false,
+      }
+    );
+
+    // causes rerender, thus updating the query
+    history.replace(`/dashboard/?${newRoute}`);
   }
 
   // pagination
   function handlePrevious() {
-    setPage((_page) => _page - 1);
+    const routeParams = queryString.parse(location.search, {
+      arrayFormat: 'comma',
+    });
+
+    const newPage = pageRef.current - 1;
+    const newRoute = queryString.stringify(
+      { ...routeParams, ...{ page: newPage } },
+      {
+        arrayFormat: 'comma',
+        sort: false,
+        encode: false,
+      }
+    );
+
+    pageRef.current = newPage;
+    // causes rerender, thus updating the query
+    history.replace(`/dashboard/?${newRoute}`);
   }
 
   function handleNext() {
-    setPage((_page) => _page + 1);
+    const routeParams = queryString.parse(location.search, {
+      arrayFormat: 'comma',
+    });
+
+    const newPage = pageRef.current + 1;
+    const newRoute = queryString.stringify(
+      { ...routeParams, ...{ page: newPage } },
+      {
+        arrayFormat: 'comma',
+        sort: false,
+        encode: false,
+      }
+    );
+
+    pageRef.current = newPage;
+    // causes rerender, thus updating the query
+    history.replace(`/dashboard/?${newRoute}`);
   }
 
   // filters
@@ -319,7 +356,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
                     </FormControl>
 
                     <Flex justifyContent="flex-end" mt="10">
-                      <Button type="submit" colorScheme="blue" size="sm" isLoading={isSearching} variant="ghost">
+                      <Button type="submit" colorScheme="blue" size="sm" variant="ghost">
                         Search
                       </Button>
                     </Flex>
@@ -362,10 +399,15 @@ export const OpenReservationsPage = (): JSX.Element | null => {
           {/* TODO: move pagination to a component */}
           <Flex justifyContent={{ base: 'center', sm: 'flex-end' }} mt="5" w="full">
             <ButtonGroup variant="outline" colorScheme="blue" w={['full', 'xs']}>
-              <Button onClick={handlePrevious} isDisabled={page === 1} w={['full']} isLoading={isLoading}>
+              <Button onClick={handlePrevious} isDisabled={pageRef.current === 1} w={['full']} isLoading={isLoading}>
                 Previous
               </Button>
-              <Button onClick={handleNext} isDisabled={page === totalPages} w={['full']} isLoading={isLoading}>
+              <Button
+                onClick={handleNext}
+                isDisabled={pageRef.current === totalPages}
+                w={['full']}
+                isLoading={isLoading}
+              >
                 Next
               </Button>
             </ButtonGroup>
