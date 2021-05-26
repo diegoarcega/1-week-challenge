@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   Drawer,
   DrawerBody,
@@ -12,10 +12,9 @@ import {
   ButtonGroup,
   Flex,
   FormControl,
-  Select,
   Input,
-  InputGroup,
-  InputLeftAddon,
+  Checkbox,
+  CheckboxGroup,
   Box,
   SimpleGrid,
   Text,
@@ -24,12 +23,20 @@ import {
   useToast,
   FormErrorMessage,
   Image,
+  Select,
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+  AccordionIcon,
 } from '@chakra-ui/react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { getOpenReservations, reserve, ReserveInput } from 'services/reservation.service';
 import { OpenReservation, PaginationAndFilteringOutput } from 'mocks/handlers';
 import { BikeCard, bikeImageSample } from 'pages/user/open-reservations/bike-card/bike-card';
 import { useUserStore } from 'stores/user.store';
+import { Bike } from 'types/bike.type';
+import { Rating } from 'types/rating.type';
 
 // TODO: DONT NEED TO BE LOGGED IN
 interface QueryParams {
@@ -37,18 +44,34 @@ interface QueryParams {
   to: string;
   page: number;
   perPage: number;
-  filters: Record<string, string>;
+  filters: Record<string, string | string[] | number>;
+}
+
+interface GetOpenReservations {
+  models: {
+    [key: string]: number;
+  };
+  colors: {
+    [key: string]: number;
+  };
+  openReservations: PaginationAndFilteringOutput<OpenReservation>;
+}
+
+export interface SelectedReservation extends Bike {
+  ratingAverage: Rating['rating'];
 }
 
 export const OpenReservationsPage = (): JSX.Element | null => {
-  const [page, setPage] = React.useState(1);
-  const selectRef = useRef<HTMLSelectElement>(null); // avoid rerender
-  const inputRef = useRef<HTMLInputElement>(null); // avoid rerender
+  const [page, setPage] = useState(1);
+  const modelFilterRef = useRef<string[]>([]); // avoid rerender
+  const colorFilterRef = useRef<string[]>([]); // avoid rerender
+  const locationFilterRef = useRef<HTMLInputElement | null>(null); // avoid rerender
+  const ratingFilterRef = useRef<HTMLSelectElement | null>(null); // avoid rerender
   const fromRef = useRef<HTMLInputElement>(null); // avoid rerender
   const toRef = useRef<HTMLInputElement>(null); // avoid rerender
   const searchByFromRef = useRef<HTMLInputElement | null>(null); // avoid rerender
   const searchByToRef = useRef<HTMLInputElement | null>(null); // avoid rerender
-  const selectedOpenReservation = useRef<OpenReservation | null>(null);
+  const selectedOpenReservation = useRef<SelectedReservation | null>(null);
   const user = useUserStore((state) => state.user);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const queryClient = useQueryClient();
@@ -64,7 +87,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
     page,
   };
   const cacheKey = ['open-reservations', queryParams, user?.id];
-  const { data } = useQuery<{ openReservations: PaginationAndFilteringOutput<OpenReservation> }>(cacheKey, () => {
+  const { data } = useQuery<GetOpenReservations>(cacheKey, () => {
     return getOpenReservations(queryParams);
   });
 
@@ -88,7 +111,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
     mutateAsync: reserveMutation,
     isLoading: isReserving,
     error: reserveMutationError,
-    reset: reserReservationMutation,
+    reset: resetReservationMutation,
   } = useMutation(
     (variables: ReserveInput) => {
       return reserve(variables);
@@ -107,7 +130,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
   );
 
   async function handleReserve() {
-    const bikeId = selectedOpenReservation.current?.bike.id;
+    const bikeId = selectedOpenReservation.current?.id;
     const from = fromRef.current?.value;
     const to = toRef.current?.value;
 
@@ -123,25 +146,26 @@ export const OpenReservationsPage = (): JSX.Element | null => {
       });
       onClose();
     } catch (error) {
-      console.log('date is taken', error);
+      console.info('date is taken', error);
     }
   }
 
   function handleSearch(event: React.FormEvent) {
     event.preventDefault();
-    const filterKey = selectRef.current?.value;
-    const filterValue = inputRef.current?.value;
-    const from = searchByFromRef.current?.value;
-    const to = searchByToRef.current?.value;
     const query = {
       ...queryParams,
+      page: 1,
+      perPage: 12,
+      filters: {
+        ...(modelFilterRef.current.length && { 'bike.model': modelFilterRef.current }),
+        ...(colorFilterRef.current.length && { 'bike.color': colorFilterRef.current }),
+        ...(locationFilterRef.current?.value && { 'bike.location': locationFilterRef.current?.value }),
+        ...(ratingFilterRef.current?.value && { ratingAverage: Number(ratingFilterRef.current?.value) }),
+      },
     };
 
-    if (filterKey) {
-      query.filters = {
-        [filterKey]: filterKey === 'ratingAverage' && filterValue ? Number(filterValue) : filterValue,
-      };
-    }
+    const from = searchByFromRef.current?.value;
+    const to = searchByToRef.current?.value;
 
     if (from !== undefined && to !== undefined) {
       query.from = from;
@@ -151,6 +175,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
     searchMutation(query);
   }
 
+  // pagination
   function handlePrevious() {
     setPage((_page) => _page - 1);
   }
@@ -159,15 +184,29 @@ export const OpenReservationsPage = (): JSX.Element | null => {
     setPage((_page) => _page + 1);
   }
 
+  // filters
+  function handleChangeModelFilter(value: string[]) {
+    modelFilterRef.current = value;
+  }
+
+  function handleChangeColorFilter(value: string[]) {
+    colorFilterRef.current = value;
+  }
+
+  const handleReserveBike = useCallback(
+    (reservation) => {
+      resetReservationMutation();
+      selectedOpenReservation.current = reservation;
+      onOpen();
+    },
+    [onOpen, resetReservationMutation]
+  );
+
   let openReservations = null;
   if (data) {
     openReservations = data?.openReservations.results.map((reservation) => ({
       ...reservation,
-      onReserveBike: () => {
-        reserReservationMutation();
-        selectedOpenReservation.current = reservation;
-        onOpen();
-      },
+      onReserveBike: handleReserveBike,
     }));
   }
 
@@ -177,101 +216,145 @@ export const OpenReservationsPage = (): JSX.Element | null => {
 
   const totalPages = data ? data.openReservations.totalPages : 1;
   const selectedReservation = selectedOpenReservation?.current;
+
   return (
-    <>
-      {/* TODO: move the filters to its own component */}
-      <Box bg="white" p="5">
-        <Flex
-          as="form"
-          onSubmit={handleSearch}
-          flexDirection={{ base: 'column', lg: 'row' }}
-          justifyContent={{ base: 'initial', md: 'space-between' }}
-          w="full"
-        >
-          <Flex flexDirection={{ base: 'column', md: 'row' }} justifyContent={{ md: 'flex-end', lg: 'flex-start' }}>
-            <FormControl id="from" w={{ base: 'full', md: '210px' }} mr={{ base: '0', md: '5' }}>
-              <InputGroup size="sm">
-                <InputLeftAddon bg="white">From</InputLeftAddon>
-                <Input ref={searchByFromRef} type="date" defaultValue="" />
-              </InputGroup>
-            </FormControl>
-            <FormControl id="to" mt={{ base: '1', md: '0' }} w={{ base: 'full', md: '210px' }}>
-              <InputGroup size="sm">
-                <InputLeftAddon bg="white">To</InputLeftAddon>
-                <Input placeholder="example: red" ref={searchByToRef} type="date" defaultValue="" />
-              </InputGroup>
-            </FormControl>
-          </Flex>
-          <Flex
-            flexDirection={{ base: 'column', md: 'row' }}
-            justifyContent={{ md: 'flex-end', lg: 'flex-start' }}
-            mt={{ md: '5', lg: '0' }}
-          >
-            <Box minW={{ base: 'full', md: '200' }} mt={{ base: '5', md: '0' }}>
-              <FormControl id="search-by" w={{ base: 'full', md: '190px' }}>
-                <InputGroup size="sm">
-                  <InputLeftAddon bg="white">Search by</InputLeftAddon>
-                  <Select name="searchBy" ref={selectRef}>
-                    <option value="bike.model">Model</option>
-                    <option value="bike.color">Color</option>
-                    <option value="bike.location">Location</option>
-                    <option value="ratingAverage">Rating</option>
-                  </Select>
-                </InputGroup>
-              </FormControl>
-            </Box>
-            <Flex flexDirection={{ base: 'column', md: 'row' }} ml={{ base: '0', md: '4' }}>
-              <FormControl id="term" mt={{ base: '1', md: '0' }} w={{ base: 'full', md: '210px' }}>
-                <InputGroup size="sm">
-                  <InputLeftAddon bg="white">Term</InputLeftAddon>
-                  <Input placeholder="example: red" ref={inputRef} />
-                </InputGroup>
-              </FormControl>
-              <Button
-                type="submit"
-                colorScheme="blue"
-                size="sm"
-                minW={{ base: 'full', md: '50' }}
-                ml={{ base: '0', md: '2' }}
-                mt={{ base: '5', md: '0' }}
-                isLoading={isSearching}
-              >
-                Search
-              </Button>
-            </Flex>
-          </Flex>
-        </Flex>
+    <SimpleGrid templateColumns={{ base: '1', md: '200px 1fr' }} columnGap="5">
+      <Box bg="white" p="5" rounded="5">
+        <Accordion allowToggle defaultIndex={0}>
+          <AccordionItem border="0">
+            <AccordionButton display={{ base: 'inline-flex', md: 'none' }} mb={{ base: '5', md: '0' }}>
+              <Box flex="1" textAlign="left">
+                Filters
+              </Box>
+              <AccordionIcon />
+            </AccordionButton>
+            <AccordionPanel padding="0">
+              {/* TODO: move the filters to its own component */}
+              <Flex as="form" onSubmit={handleSearch} flexDirection={{ base: 'column' }}>
+                <Flex flexDirection={{ base: 'column' }}>
+                  <FormControl id="from">
+                    <FormLabel fontSize="xs" color="gray.500" textTransform="uppercase">
+                      From
+                    </FormLabel>
+                    <Input ref={searchByFromRef} type="date" defaultValue="" fontSize="sm" />
+                  </FormControl>
+                  <FormControl id="to" mt={{ base: '5' }}>
+                    <FormLabel fontSize="xs" color="gray.500" textTransform="uppercase">
+                      To
+                    </FormLabel>
+                    <Input ref={searchByToRef} fontSize="sm" type="date" defaultValue="" />
+                  </FormControl>
+                </Flex>
+                <Flex flexDirection={{ base: 'column' }} mt={{ base: '10' }}>
+                  {data && (
+                    <FormControl id="model">
+                      <FormLabel fontSize="xs" color="gray.500" textTransform="uppercase">
+                        Model
+                      </FormLabel>
+                      <CheckboxGroup onChange={handleChangeModelFilter} size="sm">
+                        <VStack alignItems="flex-start">
+                          {Object.entries(data.models).map(([key, value]) => (
+                            <Checkbox value={key} key={key} textTransform="capitalize">
+                              {key}
+                              <Text ml="2" fontSize="xs" color="gray.400" as="span">
+                                {value}
+                              </Text>
+                            </Checkbox>
+                          ))}
+                        </VStack>
+                      </CheckboxGroup>
+                    </FormControl>
+                  )}
+
+                  {data && (
+                    <FormControl id="color" mt="5">
+                      <FormLabel fontSize="xs" color="gray.500" textTransform="uppercase">
+                        Color
+                      </FormLabel>
+                      <CheckboxGroup onChange={handleChangeColorFilter} size="sm">
+                        <VStack alignItems="flex-start">
+                          {Object.entries(data.colors).map(([key, value]) => (
+                            <Checkbox value={key} key={key} textTransform="capitalize">
+                              {key}
+                              <Text ml="2" fontSize="xs" color="gray.400" as="span">
+                                {value}
+                              </Text>
+                            </Checkbox>
+                          ))}
+                        </VStack>
+                      </CheckboxGroup>
+                    </FormControl>
+                  )}
+                  <FormControl id="rating" mt="5">
+                    <FormLabel fontSize="xs" color="gray.500" textTransform="uppercase">
+                      Rating
+                    </FormLabel>
+                    <Flex>
+                      <Select ref={ratingFilterRef} w="20">
+                        <option value="" selected>
+                          All
+                        </option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                      </Select>
+                    </Flex>
+                  </FormControl>
+                  <FormControl id="location" mt="5">
+                    <FormLabel fontSize="xs" color="gray.500" textTransform="uppercase">
+                      Location
+                    </FormLabel>
+                    <Input ref={locationFilterRef} />
+                  </FormControl>
+
+                  <Flex justifyContent="flex-end" mt="10">
+                    <Button type="submit" colorScheme="blue" size="sm" isLoading={isSearching} variant="ghost">
+                      Search
+                    </Button>
+                  </Flex>
+                </Flex>
+              </Flex>
+            </AccordionPanel>
+          </AccordionItem>
+        </Accordion>
       </Box>
+
       {openReservations.length === 0 ? (
         <Text textAlign="center" mt="10" fontSize="xl" fontWeight="bold" color="blue.500">
           No results for this query
         </Text>
       ) : (
-        <SimpleGrid columns={[1, 2, 3, 4]} gap="4" py="5">
-          {openReservations.map((reservation) => (
-            <BikeCard
-              key={reservation.bike.id}
-              model={reservation.bike.model}
-              color={reservation.bike.color}
-              location={reservation.bike.location}
-              status={reservation.bike.status}
-              ratingAverage={reservation.ratingAverage}
-              onReserve={reservation.onReserveBike}
-            />
-          ))}
-        </SimpleGrid>
+        <Box>
+          <SimpleGrid columns={[1, 2, 3, 4]} gap="4" pb="5">
+            {openReservations.map((reservation) => (
+              <BikeCard
+                key={reservation.bike.id}
+                id={reservation.bike.id}
+                model={reservation.bike.model}
+                color={reservation.bike.color}
+                location={reservation.bike.location}
+                status={reservation.bike.status}
+                ratingAverage={reservation.ratingAverage}
+                onReserve={reservation.onReserveBike}
+              />
+            ))}
+          </SimpleGrid>
+          {/* TODO: move pagination to a component */}
+          <Flex justifyContent={{ base: 'center', sm: 'flex-end' }} mt="5" w="full">
+            <ButtonGroup variant="outline" colorScheme="blue" w={['full', 'xs']}>
+              <Button onClick={handlePrevious} isDisabled={page === 1} w={['full']}>
+                Previous
+              </Button>
+              <Button onClick={handleNext} isDisabled={page === totalPages} w={['full']}>
+                Next
+              </Button>
+            </ButtonGroup>
+          </Flex>
+        </Box>
       )}
-      {/* TODO: move pagination to a component */}
-      <Flex justifyContent={{ base: 'center', sm: 'flex-end' }} mt="5" w="full">
-        <ButtonGroup variant="outline" colorScheme="blue" w={['full', 'xs']}>
-          <Button onClick={handlePrevious} isDisabled={page === 1} w={['full']}>
-            Previous
-          </Button>
-          <Button onClick={handleNext} isDisabled={page === totalPages} w={['full']}>
-            Next
-          </Button>
-        </ButtonGroup>
-      </Flex>
+
       {/* TODO: move Drawer to a component */}
       {selectedReservation && (
         <Drawer isOpen={isOpen} placement="right" size="sm" onClose={onClose}>
@@ -279,17 +362,17 @@ export const OpenReservationsPage = (): JSX.Element | null => {
           <DrawerContent>
             <DrawerCloseButton color="white" />
             <DrawerHeader textTransform="uppercase" bg="blue.600" color="white">
-              Reserve the {selectedReservation.bike.color} {selectedReservation.bike.model}
+              Reserve the {selectedReservation.color} {selectedReservation.model}
             </DrawerHeader>
             <Image
               src={bikeImageSample.imageURL}
-              alt={`Picture of a ${selectedReservation.bike.color} ${selectedReservation.bike.model}`}
+              alt={`Picture of a ${selectedReservation.color} ${selectedReservation.model}`}
               rounded="sm"
               maxW="full"
             />
 
             <DrawerBody bg="gray.300">
-              <Text as="address">{selectedReservation.bike.location}</Text>
+              <Text as="address">{selectedReservation.location}</Text>
               {selectedReservation.ratingAverage && (
                 <Text fontSize="xs" textTransform="uppercase">
                   Rating: {selectedReservation.ratingAverage}
@@ -322,6 +405,6 @@ export const OpenReservationsPage = (): JSX.Element | null => {
           </DrawerContent>
         </Drawer>
       )}
-    </>
+    </SimpleGrid>
   );
 };

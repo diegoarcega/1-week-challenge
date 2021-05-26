@@ -3,26 +3,36 @@ import React from 'react';
 import { Flex, Box, Image, useColorModeValue, Text, Button, Badge } from '@chakra-ui/react';
 import { Rating as RatingComponent } from 'components/rating/rating';
 import { Bike } from 'types/bike.type';
-import { Rating } from 'types/rating.type';
+import { SelectedReservation } from '../open-reservations';
 
 export const bikeImageSample = {
   imageURL:
     'https://www.10wallpaper.com/wallpaper/1366x768/1710/2017_Triumph_street_cup_Motorcycles_Wallpaper_1366x768.jpg',
 };
 
-interface BikeCardProps extends Omit<Bike, 'id'> {
-  onReserve: () => void;
-  ratingAverage?: Rating['rating'];
+interface BikeCardProps extends SelectedReservation {
+  onReserve: (props: Omit<Bike, 'status'> & { ratingAverage?: number }) => void;
 }
 
-function BikeCard({ model, color, location, status, onReserve, ratingAverage }: BikeCardProps): JSX.Element {
+const BikeCard = React.memo(function BikeCard({
+  id,
+  model,
+  color,
+  location,
+  status,
+  onReserve,
+  ratingAverage,
+}: BikeCardProps): JSX.Element {
+  function handleReserveBike() {
+    onReserve({ id, model, color, location, ratingAverage });
+  }
   return (
     <Flex justifyContent="center">
       <Flex
         bg={useColorModeValue('white', 'gray.800')}
         maxW="full"
         borderWidth="1px"
-        rounded="lg"
+        rounded="md"
         shadow="lg"
         position="relative"
         flexDirection="column"
@@ -37,10 +47,10 @@ function BikeCard({ model, color, location, status, onReserve, ratingAverage }: 
           minHeight="165px"
           justifyContent="center"
           overflow="hidden"
-          roundedTop="lg"
+          roundedTop="md"
           backgroundClip="padding-box"
         >
-          <Image src={bikeImageSample.imageURL} alt={`Picture of a ${color} ${model}`} roundedTop="lg" maxW="full" />
+          <Image src={bikeImageSample.imageURL} alt={`Picture of a ${color} ${model}`} roundedTop="md" maxW="full" />
         </Flex>
 
         <Flex p="6" direction="column" justifyContent="space-between" h={['auto', 'full']}>
@@ -61,7 +71,7 @@ function BikeCard({ model, color, location, status, onReserve, ratingAverage }: 
               </Text>
             )}
 
-            <Button colorScheme="blue" w="full" onClick={onReserve} isDisabled={status !== 'available'}>
+            <Button colorScheme="blue" w="full" onClick={handleReserveBike} isDisabled={status !== 'available'}>
               {status === 'available' ? 'Reserve now!' : 'Not available'}
             </Button>
           </Box>
@@ -69,6 +79,6 @@ function BikeCard({ model, color, location, status, onReserve, ratingAverage }: 
       </Flex>
     </Flex>
   );
-}
+});
 
 export { BikeCard };

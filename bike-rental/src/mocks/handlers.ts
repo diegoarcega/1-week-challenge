@@ -49,7 +49,7 @@ Storage.setItem(AUTH_TOKENS_DATABASE_KEY, []);
 
 // will start without reservations
 function initApp() {
-  const randomBikes = createRandomBikes(5);
+  const randomBikes = createRandomBikes(20);
   const diegoNormal = USERS[1];
   // rate some bikes
   const ratings = [
@@ -552,14 +552,24 @@ export const handlers = [
       });
     }
 
+    const openReservationsFinal = withPaginationAndFiltering({
+      perPage,
+      page,
+      filters,
+      results: openReservationsByDate as unknown as OpenReservationsWithPaginator[],
+    });
+
     return res(
       ctx.data({
-        openReservations: withPaginationAndFiltering({
-          perPage,
-          page,
-          filters,
-          results: openReservationsByDate as unknown as OpenReservationsWithPaginator[],
-        }),
+        models: openReservationsWithRating.reduce<{ [key: string]: number }>((acc, item: { bike: Bike }) => {
+          acc[item.bike.model] = (acc[item.bike.model] || 0) + 1;
+          return acc;
+        }, {}),
+        colors: openReservationsWithRating.reduce<{ [key: string]: number }>((acc, item: { bike: Bike }) => {
+          acc[item.bike.color] = (acc[item.bike.color] || 0) + 1;
+          return acc;
+        }, {}),
+        openReservations: openReservationsFinal,
       })
     );
   }),
@@ -777,7 +787,7 @@ export const handlers = [
 ];
 
 export interface PaginationAndFiltering {
-  filters: { [key: string]: string | number };
+  filters: { [key: string]: string | number | string[] };
   perPage: number;
   page: number;
   results: OpenReservationsWithPaginator[];
@@ -813,17 +823,28 @@ function withFilters({ filters, results }: Pick<PaginationAndFiltering, 'filters
 
     return Object.entries(filters).some(([filterKey, filterValue]) => {
       const resultValue = get(result, filterKey) as string | number;
-
+      console.log({ filterKey, filterValue, resultValue });
       if (!filterValue) {
+        console.log('is undefined');
         return true;
       }
 
+      // models, colors
+      if (Array.isArray(filterValue)) {
+        console.log('is array');
+        return filterValue.includes(resultValue as string);
+      }
+
+      // rating
       if (typeof resultValue === 'number') {
+        console.log('is number');
         return Math.floor(resultValue) === filterValue;
       }
 
+      // location
       if (typeof resultValue === 'string') {
-        return resultValue.includes(filterValue as string);
+        console.log('is string');
+        return resultValue.toLowerCase().includes((filterValue as string).toLowerCase());
       }
 
       return false;

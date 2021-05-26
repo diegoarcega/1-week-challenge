@@ -38,9 +38,17 @@ type GetOpenReservationsInput = Pick<PaginationAndFiltering, 'perPage' | 'page' 
 };
 export function getOpenReservations({ from, to, perPage, page, filters }: GetOpenReservationsInput): Promise<{
   openReservations: PaginationAndFilteringOutput<OpenReservation>;
+  models: {
+    [key: string]: number;
+  };
+  colors: {
+    [key: string]: number;
+  };
 }> {
   const query = gql`
     query OpenReservations {
+      models
+      colors
       openReservations {
         bike {
           id
