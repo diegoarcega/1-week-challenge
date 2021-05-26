@@ -72,7 +72,7 @@ export const LoginPage = (): JSX.Element => {
           <Heading fontSize="2xl">Sign in to your account</Heading>
           <Text>
             Don't have an account?{' '}
-            <Link as={LinkRouter} to="/signup" color="blue.500">
+            <Link as={LinkRouter} to="/signup" color="blue.500" data-testid="signup-link">
               Sign up for free
             </Link>
           </Text>
@@ -85,6 +85,7 @@ export const LoginPage = (): JSX.Element => {
                   register={register}
                   label="Email address"
                   error={errors.email?.message}
+                  data-testid="email-field"
                 />
                 <Input
                   name="password"
@@ -92,10 +93,12 @@ export const LoginPage = (): JSX.Element => {
                   register={register}
                   label="Password"
                   error={errors.password?.message}
+                  data-testid="password-field"
                 />
                 <ErrorMessage
                   errors={errors}
                   name="formError"
+                  data-testid="error-message-api"
                   render={({ message }) => (
                     <FormControl isInvalid={!!message} mt="0">
                       <FormErrorMessage>{message}</FormErrorMessage>
@@ -103,7 +106,7 @@ export const LoginPage = (): JSX.Element => {
                   )}
                 />
 
-                <Button type="submit" colorScheme="blue" size="lg" fontSize="md">
+                <Button type="submit" colorScheme="blue" size="lg" fontSize="md" data-testid="sign-in-button">
                   Sign in
                 </Button>
               </Stack>
