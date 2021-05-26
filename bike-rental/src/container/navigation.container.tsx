@@ -29,14 +29,12 @@ import {
 import { HamburgerIcon, CloseIcon, ChevronDownIcon, ChevronRightIcon } from '@chakra-ui/icons';
 import { useUserStore } from 'stores/user.store';
 
-/* eslint-disable react/require-default-props, react/no-unused-prop-types */
 export interface NavItem {
   label: string;
   subLabel?: string;
   children?: NavItem[];
   href?: string;
 }
-/* eslint-enable react/require-default-props, react/no-unused-prop-types */
 
 interface Props {
   options: NavItem[];
@@ -133,12 +131,10 @@ function DesktopNav({ options }: Props) {
                 to={navItem.href ?? '#'}
                 fontSize="lg"
                 fontWeight={500}
-                // eslint-disable-next-line react-hooks/rules-of-hooks
-                color={useColorModeValue('gray.600', 'gray.200')}
+                color="gray.600"
                 _hover={{
                   textDecoration: 'none',
-                  // eslint-disable-next-line react-hooks/rules-of-hooks
-                  color: useColorModeValue('gray.800', 'white'),
+                  color: 'gray.800',
                 }}
               >
                 {navItem.label}
@@ -146,15 +142,7 @@ function DesktopNav({ options }: Props) {
             </PopoverTrigger>
 
             {navItem.children && (
-              <PopoverContent
-                border={0}
-                boxShadow="xl"
-                // eslint-disable-next-line react-hooks/rules-of-hooks
-                bg={useColorModeValue('white', 'gray.800')}
-                p={4}
-                rounded="xl"
-                minW="sm"
-              >
+              <PopoverContent border={0} boxShadow="xl" bg="white" p={4} rounded="xl" minW="sm">
                 <Stack>
                   {navItem.children.map((child) => (
                     <DesktopSubNav key={child.label} {...child} />

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import React from 'react';
 import { useHistory, Link as LinkRouter } from 'react-router-dom';
 import { Box, Button, Flex, Heading, Stack, Image, FormErrorMessage, FormControl, Text, Link } from '@chakra-ui/react';

@@ -1,4 +1,3 @@
-/* eslint-disable react/no-array-index-key */
 import React from 'react';
 import { Flex, Box, Image, useColorModeValue, Text, Button, Badge } from '@chakra-ui/react';
 import { Rating as RatingComponent } from 'components/rating/rating';

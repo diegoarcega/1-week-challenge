@@ -1,9 +1,8 @@
-import { Flex, Heading } from '@chakra-ui/react';
 import * as React from 'react';
+import { Flex, Heading } from '@chakra-ui/react';
 
 interface Props {
   title: string;
-  // eslint-disable-next-line react/require-default-props
   prefix?: React.ReactNode;
   action?: React.ReactNode;
 }

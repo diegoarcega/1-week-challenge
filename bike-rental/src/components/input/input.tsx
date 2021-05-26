@@ -1,5 +1,4 @@
 import React from 'react';
-// import {  UseFormRegister } from 'react-hook-form';
 import { Input as InputChakra, InputProps, FormControl, FormLabel, FormErrorMessage } from '@chakra-ui/react';
 
 interface Props extends InputProps {

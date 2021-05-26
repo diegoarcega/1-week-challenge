@@ -1,24 +1,20 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter } from 'react-router-dom';
 import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { worker } from './mocks/browser';
 
 import App from './app';
 
 export const queryClient = new QueryClient();
 
-// if (process.env.NODE_ENV === 'development') {
-/* eslint-disable global-require */
-/* eslint-disable @typescript-eslint/no-var-requires */
-const { worker } = require('./mocks/browser');
-// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-worker.start();
-/* eslint-enable global-require */
-/* eslint-enable @typescript-eslint/no-var-requires */
-// }
+// STARTS MOCKED BACKED
+function init() {
+  worker.start().then(console.log).catch(console.error);
+}
+
+init();
 
 const theme = extendTheme({
   styles: {
