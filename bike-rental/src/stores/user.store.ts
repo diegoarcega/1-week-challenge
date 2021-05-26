@@ -8,7 +8,7 @@ interface UserState {
   clearUser: () => void;
 }
 export const useUserStore = create<UserState>((set) => ({
-  user: getUser(),
+  user: getUser(), // only going to be used on authorized routes
   setUser: (userData: User) => set({ user: userData }),
   clearUser: () => set({ user: null }),
 }));

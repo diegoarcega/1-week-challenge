@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef } from 'react';
 import {
   Drawer,
   DrawerBody,
@@ -169,8 +169,12 @@ export const OpenReservationsPage = (): JSX.Element | null => {
   function handleSearch(event: React.FormEvent) {
     event.preventDefault();
     const query = {
-      ...initialQueryParams,
+      from: initialQueryParams.from,
+      to: initialQueryParams.to,
+      perPage: initialQueryParams.perPage,
+      page: initialQueryParams.page,
     };
+    pageRef.current = 1;
 
     const filters = {
       ...(modelFilterRef.current.length && { 'bike.model': modelFilterRef.current }),
