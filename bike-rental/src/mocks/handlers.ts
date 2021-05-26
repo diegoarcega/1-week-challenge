@@ -49,7 +49,7 @@ Storage.setItem(AUTH_TOKENS_DATABASE_KEY, []);
 
 // will start without reservations
 function initApp() {
-  const randomBikes = createRandomBikes(20);
+  const randomBikes = createRandomBikes(50);
   const diegoNormal = USERS[1];
   // rate some bikes
   const ratings = [
@@ -823,27 +823,23 @@ function withFilters({ filters, results }: Pick<PaginationAndFiltering, 'filters
 
     return Object.entries(filters).some(([filterKey, filterValue]) => {
       const resultValue = get(result, filterKey) as string | number;
-      console.log({ filterKey, filterValue, resultValue });
+
       if (!filterValue) {
-        console.log('is undefined');
         return true;
       }
 
       // models, colors
       if (Array.isArray(filterValue)) {
-        console.log('is array');
         return filterValue.includes(resultValue as string);
       }
 
       // rating
       if (typeof resultValue === 'number') {
-        console.log('is number');
         return Math.floor(resultValue) === filterValue;
       }
 
       // location
       if (typeof resultValue === 'string') {
-        console.log('is string');
         return resultValue.toLowerCase().includes((filterValue as string).toLowerCase());
       }
 

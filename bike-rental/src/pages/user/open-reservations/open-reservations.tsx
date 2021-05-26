@@ -29,6 +29,8 @@ import {
   AccordionButton,
   AccordionPanel,
   AccordionIcon,
+  Center,
+  Spinner,
 } from '@chakra-ui/react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { getOpenReservations, reserve, ReserveInput } from 'services/reservation.service';
@@ -76,20 +78,32 @@ export const OpenReservationsPage = (): JSX.Element | null => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const queryClient = useQueryClient();
   const toast = useToast();
-  const queryParamsRef = useRef({
-    from: '',
-    to: '',
-    perPage: 12,
-    filters: {},
-  });
+
+  const searchByFrom = searchByFromRef.current?.value ?? '';
+  const searchByTo = searchByToRef.current?.value ?? '';
   const queryParams = {
-    ...queryParamsRef.current,
+    from: searchByFrom,
+    to: searchByTo,
+    perPage: 12,
+    filters: {
+      ...(modelFilterRef.current.length && { 'bike.model': modelFilterRef.current }),
+      ...(colorFilterRef.current.length && { 'bike.color': colorFilterRef.current }),
+      ...(locationFilterRef.current?.value && { 'bike.location': locationFilterRef.current?.value }),
+      ...(ratingFilterRef.current?.value && { ratingAverage: Number(ratingFilterRef.current?.value) }),
+    },
     page,
   };
   const cacheKey = ['open-reservations', queryParams, user?.id];
-  const { data } = useQuery<GetOpenReservations>(cacheKey, () => {
-    return getOpenReservations(queryParams);
-  });
+  const { data, isLoading } = useQuery<GetOpenReservations>(
+    cacheKey,
+    () => {
+      return getOpenReservations(queryParams);
+    },
+    {
+      keepPreviousData: true,
+      refetchOnWindowFocus: false,
+    }
+  );
 
   const { mutate: searchMutation, isLoading: isSearching } = useMutation(
     (queryParamsVariable: QueryParams) => {
@@ -146,6 +160,7 @@ export const OpenReservationsPage = (): JSX.Element | null => {
       });
       onClose();
     } catch (error) {
+      // log to analytics and sentry
       console.info('date is taken', error);
     }
   }
@@ -210,10 +225,6 @@ export const OpenReservationsPage = (): JSX.Element | null => {
     }));
   }
 
-  if (!openReservations) {
-    return null;
-  }
-
   const totalPages = data ? data.openReservations.totalPages : 1;
   const selectedReservation = selectedOpenReservation?.current;
 
@@ -229,106 +240,113 @@ export const OpenReservationsPage = (): JSX.Element | null => {
               <AccordionIcon />
             </AccordionButton>
             <AccordionPanel padding="0">
-              {/* TODO: move the filters to its own component */}
-              <Flex as="form" onSubmit={handleSearch} flexDirection={{ base: 'column' }}>
-                <Flex flexDirection={{ base: 'column' }}>
-                  <FormControl id="from">
-                    <FormLabel fontSize="xs" color="gray.500" textTransform="uppercase">
-                      From
-                    </FormLabel>
-                    <Input ref={searchByFromRef} type="date" defaultValue="" fontSize="sm" />
-                  </FormControl>
-                  <FormControl id="to" mt={{ base: '5' }}>
-                    <FormLabel fontSize="xs" color="gray.500" textTransform="uppercase">
-                      To
-                    </FormLabel>
-                    <Input ref={searchByToRef} fontSize="sm" type="date" defaultValue="" />
-                  </FormControl>
-                </Flex>
-                <Flex flexDirection={{ base: 'column' }} mt={{ base: '10' }}>
-                  {data && (
-                    <FormControl id="model">
+              {data !== undefined ? (
+                <Flex as="form" onSubmit={handleSearch} flexDirection={{ base: 'column' }}>
+                  <Flex flexDirection={{ base: 'column' }}>
+                    <FormControl id="from">
                       <FormLabel fontSize="xs" color="gray.500" textTransform="uppercase">
-                        Model
+                        From
                       </FormLabel>
-                      <CheckboxGroup onChange={handleChangeModelFilter} size="sm">
-                        <VStack alignItems="flex-start">
-                          {Object.entries(data.models).map(([key, value]) => (
-                            <Checkbox value={key} key={key} textTransform="capitalize">
-                              {key}
-                              <Text ml="2" fontSize="xs" color="gray.400" as="span">
-                                {value}
-                              </Text>
-                            </Checkbox>
-                          ))}
-                        </VStack>
-                      </CheckboxGroup>
+                      <Input ref={searchByFromRef} type="date" defaultValue="" fontSize="sm" />
                     </FormControl>
-                  )}
+                    <FormControl id="to" mt={{ base: '5' }}>
+                      <FormLabel fontSize="xs" color="gray.500" textTransform="uppercase">
+                        To
+                      </FormLabel>
+                      <Input ref={searchByToRef} fontSize="sm" type="date" defaultValue="" />
+                    </FormControl>
+                  </Flex>
+                  <Flex flexDirection={{ base: 'column' }} mt={{ base: '10' }}>
+                    {data && (
+                      <FormControl id="model">
+                        <FormLabel fontSize="xs" color="gray.500" textTransform="uppercase">
+                          Model
+                        </FormLabel>
+                        <CheckboxGroup onChange={handleChangeModelFilter} size="sm">
+                          <VStack alignItems="flex-start">
+                            {Object.entries(data.models).map(([key, value]) => (
+                              <Checkbox value={key} key={key} textTransform="capitalize">
+                                {key}
+                                <Text ml="2" fontSize="xs" color="gray.400" as="span">
+                                  {value}
+                                </Text>
+                              </Checkbox>
+                            ))}
+                          </VStack>
+                        </CheckboxGroup>
+                      </FormControl>
+                    )}
 
-                  {data && (
-                    <FormControl id="color" mt="5">
+                    {data && (
+                      <FormControl id="color" mt="5">
+                        <FormLabel fontSize="xs" color="gray.500" textTransform="uppercase">
+                          Color
+                        </FormLabel>
+                        <CheckboxGroup onChange={handleChangeColorFilter} size="sm">
+                          <VStack alignItems="flex-start">
+                            {Object.entries(data.colors).map(([key, value]) => (
+                              <Checkbox value={key} key={key} textTransform="capitalize">
+                                {key}
+                                <Text ml="2" fontSize="xs" color="gray.400" as="span">
+                                  {value}
+                                </Text>
+                              </Checkbox>
+                            ))}
+                          </VStack>
+                        </CheckboxGroup>
+                      </FormControl>
+                    )}
+                    <FormControl id="rating" mt="5">
                       <FormLabel fontSize="xs" color="gray.500" textTransform="uppercase">
-                        Color
+                        Rating
                       </FormLabel>
-                      <CheckboxGroup onChange={handleChangeColorFilter} size="sm">
-                        <VStack alignItems="flex-start">
-                          {Object.entries(data.colors).map(([key, value]) => (
-                            <Checkbox value={key} key={key} textTransform="capitalize">
-                              {key}
-                              <Text ml="2" fontSize="xs" color="gray.400" as="span">
-                                {value}
-                              </Text>
-                            </Checkbox>
-                          ))}
-                        </VStack>
-                      </CheckboxGroup>
+                      <Flex>
+                        <Select ref={ratingFilterRef} w="20">
+                          <option value="">All</option>
+                          <option value="1">1</option>
+                          <option value="2">2</option>
+                          <option value="3">3</option>
+                          <option value="4">4</option>
+                          <option value="5">5</option>
+                        </Select>
+                      </Flex>
                     </FormControl>
-                  )}
-                  <FormControl id="rating" mt="5">
-                    <FormLabel fontSize="xs" color="gray.500" textTransform="uppercase">
-                      Rating
-                    </FormLabel>
-                    <Flex>
-                      <Select ref={ratingFilterRef} w="20">
-                        <option value="" selected>
-                          All
-                        </option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                      </Select>
+                    <FormControl id="location" mt="5">
+                      <FormLabel fontSize="xs" color="gray.500" textTransform="uppercase">
+                        Location
+                      </FormLabel>
+                      <Input ref={locationFilterRef} />
+                    </FormControl>
+
+                    <Flex justifyContent="flex-end" mt="10">
+                      <Button type="submit" colorScheme="blue" size="sm" isLoading={isSearching} variant="ghost">
+                        Search
+                      </Button>
                     </Flex>
-                  </FormControl>
-                  <FormControl id="location" mt="5">
-                    <FormLabel fontSize="xs" color="gray.500" textTransform="uppercase">
-                      Location
-                    </FormLabel>
-                    <Input ref={locationFilterRef} />
-                  </FormControl>
-
-                  <Flex justifyContent="flex-end" mt="10">
-                    <Button type="submit" colorScheme="blue" size="sm" isLoading={isSearching} variant="ghost">
-                      Search
-                    </Button>
                   </Flex>
                 </Flex>
-              </Flex>
+              ) : (
+                <Center>
+                  <Spinner color="blue.500" />
+                </Center>
+              )}
             </AccordionPanel>
           </AccordionItem>
         </Accordion>
       </Box>
-
-      {openReservations.length === 0 ? (
+      {isLoading && (
+        <Center>
+          <Spinner size="lg" color="blue.500" />
+        </Center>
+      )}
+      {openReservations !== null && openReservations.length === 0 ? (
         <Text textAlign="center" mt="10" fontSize="xl" fontWeight="bold" color="blue.500">
           No results for this query
         </Text>
       ) : (
         <Box>
           <SimpleGrid columns={[1, 2, 3, 4]} gap="4" pb="5">
-            {openReservations.map((reservation) => (
+            {openReservations?.map((reservation) => (
               <BikeCard
                 key={reservation.bike.id}
                 id={reservation.bike.id}
@@ -344,10 +362,10 @@ export const OpenReservationsPage = (): JSX.Element | null => {
           {/* TODO: move pagination to a component */}
           <Flex justifyContent={{ base: 'center', sm: 'flex-end' }} mt="5" w="full">
             <ButtonGroup variant="outline" colorScheme="blue" w={['full', 'xs']}>
-              <Button onClick={handlePrevious} isDisabled={page === 1} w={['full']}>
+              <Button onClick={handlePrevious} isDisabled={page === 1} w={['full']} isLoading={isLoading}>
                 Previous
               </Button>
-              <Button onClick={handleNext} isDisabled={page === totalPages} w={['full']}>
+              <Button onClick={handleNext} isDisabled={page === totalPages} w={['full']} isLoading={isLoading}>
                 Next
               </Button>
             </ButtonGroup>

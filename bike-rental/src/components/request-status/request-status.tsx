@@ -20,7 +20,7 @@ const RequestStatus = ({
   if (isLoading) {
     return (
       <Center>
-        <Spinner size="xl" color="green.500" />
+        <Spinner size="xl" color="blue.500" />
       </Center>
     );
   }
@@ -41,7 +41,7 @@ const RequestStatus = ({
     return (
       <>
         {noResultsMessage || (
-          <Text fontSize="4xl" colorScheme="green">
+          <Text fontSize="4xl" colorScheme="blue">
             No results
           </Text>
         )}
