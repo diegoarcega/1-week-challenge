@@ -4,6 +4,7 @@ import { Route, Switch, Redirect, RouteComponentProps } from 'react-router-dom';
 import { LoginPage } from '../pages/login';
 import { CreateAccountPage } from '../pages/signup';
 import Authenticated from './authenticated.route';
+import { PrivateRoute } from './private-route';
 
 const ManagerRoutesLazy = React.lazy(() => import(/* webpackChunkName: "ManagerRoutes" */ './manager.routes'));
 const UserRoutesLazy = React.lazy(() => import(/* webpackChunkName: "UserRoutes" */ './user.routes'));
@@ -26,8 +27,9 @@ const Routes = (): JSX.Element => {
       <Route path="/signup" exact>
         <CreateAccountPage />
       </Route>
-      <Route
+      <PrivateRoute
         path="/manager"
+        allowedRoles={['manager']}
         render={(props: RouteComponentProps) => (
           <Suspense fallback={<LoadingFallback />}>
             <Authenticated>
@@ -36,8 +38,9 @@ const Routes = (): JSX.Element => {
           </Suspense>
         )}
       />
-      <Route
+      <PrivateRoute
         path="/dashboard"
+        allowedRoles={['user']}
         render={(props: RouteComponentProps) => (
           <Suspense fallback={<LoadingFallback />}>
             <Authenticated>
@@ -47,7 +50,7 @@ const Routes = (): JSX.Element => {
         )}
       />
       <Route>
-        <p>not found</p>
+        <p>Page not found</p>
       </Route>
     </Switch>
   );

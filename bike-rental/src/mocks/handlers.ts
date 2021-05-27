@@ -49,7 +49,7 @@ Storage.setItem(AUTH_TOKENS_DATABASE_KEY, []);
 
 // will start without reservations
 function initApp() {
-  const randomBikes = createRandomBikes(50);
+  const randomBikes = createRandomBikes(3);
   const diegoNormal = USERS[1];
   // rate some bikes
   const ratings = [
