@@ -49,7 +49,7 @@ Storage.setItem(AUTH_TOKENS_DATABASE_KEY, []);
 
 // will start without reservations
 function initApp() {
-  const randomBikes = createRandomBikes(3);
+  const randomBikes = createRandomBikes(13);
   const diegoNormal = USERS[1];
   // rate some bikes
   const ratings = [
@@ -570,6 +570,37 @@ export const handlers = [
           return acc;
         }, {}),
         openReservations: openReservationsFinal,
+      })
+    );
+  }),
+  graphql.query('OpenReservationsFilters', (req, res, ctx) => {
+    try {
+      hasAuthTokenExpired(req);
+    } catch {
+      return res(
+        ctx.errors([
+          {
+            message: 'Session has expired',
+          },
+        ])
+      );
+    }
+
+    // database
+    const allBikes = Storage.getItem<Bike[]>(BIKES_DATABASE_KEY);
+    const allRatings = Storage.getItem<Rating[]>(RATINGS_DATABASE_KEY);
+    const openReservationsWithRating = initOpenReservations(allBikes, allRatings);
+
+    return res(
+      ctx.data({
+        models: openReservationsWithRating.reduce<{ [key: string]: number }>((acc, item: { bike: Bike }) => {
+          acc[item.bike.model] = (acc[item.bike.model] || 0) + 1;
+          return acc;
+        }, {}),
+        colors: openReservationsWithRating.reduce<{ [key: string]: number }>((acc, item: { bike: Bike }) => {
+          acc[item.bike.color] = (acc[item.bike.color] || 0) + 1;
+          return acc;
+        }, {}),
       })
     );
   }),

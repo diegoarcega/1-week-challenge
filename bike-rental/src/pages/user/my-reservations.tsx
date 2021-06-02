@@ -97,8 +97,6 @@ export const MyReservationsPage = (): JSX.Element => {
           variant: 'top-accent',
         });
 
-        onClose();
-
         queryClient.setQueryData<{ myReservations: MyReservation[] } | undefined>(cacheKey, (oldData) => {
           return oldData
             ? {
@@ -108,6 +106,8 @@ export const MyReservationsPage = (): JSX.Element => {
               }
             : undefined;
         });
+
+        onClose();
       },
     }
   );

@@ -118,7 +118,6 @@ export const OpenReservationsPage = (): JSX.Element | null => {
     },
     {
       keepPreviousData: true,
-      refetchOnWindowFocus: false,
     }
   );
 
@@ -406,21 +405,18 @@ export const OpenReservationsPage = (): JSX.Element | null => {
             ))}
           </SimpleGrid>
           {/* TODO: move pagination to a component */}
-          <Flex justifyContent={{ base: 'center', sm: 'flex-end' }} mt="5" w="full">
-            <ButtonGroup variant="outline" colorScheme="blue" w={['full', 'xs']}>
-              <Button onClick={handlePrevious} isDisabled={pageRef.current === 1} w={['full']} isLoading={isLoading}>
-                Previous
-              </Button>
-              <Button
-                onClick={handleNext}
-                isDisabled={pageRef.current === totalPages}
-                w={['full']}
-                isLoading={isLoading}
-              >
-                Next
-              </Button>
-            </ButtonGroup>
-          </Flex>
+          {openReservations !== null && openReservations.length > 0 && (
+            <Flex justifyContent={{ base: 'center', sm: 'flex-end' }} mt="5" w="full">
+              <ButtonGroup variant="outline" colorScheme="blue" w={['full', 'xs']}>
+                <Button onClick={handlePrevious} isDisabled={pageRef.current === 1} w={['full']}>
+                  Previous
+                </Button>
+                <Button onClick={handleNext} isDisabled={pageRef.current === totalPages} w={['full']}>
+                  Next
+                </Button>
+              </ButtonGroup>
+            </Flex>
+          )}
         </Box>
       )}
 
