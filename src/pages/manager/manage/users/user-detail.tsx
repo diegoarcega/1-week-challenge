@@ -1,12 +1,27 @@
 import React, { useState, useEffect } from 'react';
-
-import { Box, Button, ButtonGroup, useToast } from '@chakra-ui/react';
+import { Link, useParams, useHistory } from 'react-router-dom';
+import { IoIosArrowBack } from 'react-icons/io';
+import {
+  Box,
+  Button,
+  ButtonGroup,
+  useToast,
+  IconButton,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverHeader,
+  PopoverBody,
+  PopoverArrow,
+  PopoverCloseButton,
+  VStack,
+  Text,
+} from '@chakra-ui/react';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
-
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { editUser, EditUserInput, getUser } from 'services/user.service';
+import { editUser, getUser, deleteUser, EditUserInput } from 'services/user.service';
 import { Card } from 'components/card/card';
 import { CardHeader } from 'components/card/card.header';
 import { CardContent } from 'components/card/card.content';
@@ -16,22 +31,23 @@ import { Input } from 'components/input/input';
 import { RequestStatus } from 'components/request-status/request-status';
 import createRequiredSchema from 'validations/required';
 import emailSchema from 'validations/email';
-import { useUserStore } from 'stores/user.store';
 
-type FormInput = Pick<User, 'name' | 'email' | 'roles'>;
+interface FormInput extends Pick<User, 'name' | 'email'> {
+  roles: string;
+}
 
 const schema = yup.object().shape({
   name: createRequiredSchema('name'),
   email: emailSchema,
+  roles: createRequiredSchema('roles'),
 });
 
-export const MyAccountPage = (): JSX.Element => {
+export const UserDetailPage = (): JSX.Element => {
   const [isEdit, setEdit] = useState(false);
-  const userId = useUserStore((state) => state.user?.id) ?? '';
-  const setUser = useUserStore((state) => state.setUser);
+  const { userId } = useParams<{ userId: string }>();
   const queryClient = useQueryClient();
+  const history = useHistory();
   const toast = useToast();
-
   const cacheKey = ['user', userId];
 
   const { data, error, isLoading } = useQuery<{ user: User }>(cacheKey, () => {
@@ -44,14 +60,27 @@ export const MyAccountPage = (): JSX.Element => {
     },
     {
       onSuccess: (dataSuccess, { user }) => {
-        setUser({
-          ...user,
-          roles: user.roles ? user.roles?.split(',') : [],
-        });
         queryClient.setQueryData<{ user: EditUserInput } | undefined>(cacheKey, (oldData) => {
           return oldData
             ? {
                 user,
+              }
+            : undefined;
+        });
+      },
+    }
+  );
+
+  const { mutate: deleteUserMutate, error: deleteMutationError } = useMutation(
+    (variables: { userId: User['id'] }) => {
+      return deleteUser(variables.userId);
+    },
+    {
+      onSuccess: (dataSuccess, variables) => {
+        queryClient.setQueryData<{ users: User[] } | undefined>(['users'], (oldData) => {
+          return oldData
+            ? {
+                users: oldData.users.filter((user) => user.id !== variables.userId),
               }
             : undefined;
         });
@@ -68,7 +97,7 @@ export const MyAccountPage = (): JSX.Element => {
   });
 
   useEffect(() => {
-    if (mutationError) {
+    if (mutationError || deleteMutationError) {
       toast({
         title: 'Error',
         description: 'We could not process this request',
@@ -78,13 +107,18 @@ export const MyAccountPage = (): JSX.Element => {
         status: 'error',
       });
     }
-  }, [mutationError, toast]);
+  }, [mutationError, deleteMutationError, toast]);
 
   function toggleEdit() {
     setEdit((_isEdit) => !_isEdit);
   }
 
-  const onSubmit: SubmitHandler<EditUserInput> = async (formData) => {
+  function handleDelete() {
+    deleteUserMutate({ userId });
+    history.goBack();
+  }
+
+  const onSubmit: SubmitHandler<FormInput> = (formData) => {
     mutate({
       user: {
         ...formData,
@@ -100,11 +134,43 @@ export const MyAccountPage = (): JSX.Element => {
         <Card maxW="3xl" mx="auto" as="form" onSubmit={handleSubmit(onSubmit)}>
           <CardHeader
             title={data ? data.user?.name : ''}
+            prefix={
+              <IconButton
+                aria-label="navigate back"
+                as={Link}
+                to="/manager/manage/users"
+                variant="outline"
+                icon={<IoIosArrowBack />}
+                fontSize={{ base: 'xs', md: 'md' }}
+              />
+            }
             action={
               <ButtonGroup>
                 <Button variant="outline" fontSize={{ base: 'xs', md: 'md' }} onClick={toggleEdit}>
                   {isEdit ? 'Cancel' : 'Edit'}
                 </Button>
+                {isEdit && (
+                  <Popover>
+                    <PopoverTrigger>
+                      <Button variant="outline" colorScheme="red" fontSize={{ base: 'xs', md: 'md' }}>
+                        Delete
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent>
+                      <PopoverArrow />
+                      <PopoverCloseButton />
+                      <PopoverHeader>Confirmation!</PopoverHeader>
+                      <PopoverBody>
+                        <VStack>
+                          <Text>Are you sure you want delete this user?</Text>
+                          <Button colorScheme="red" onClick={handleDelete} variant="solid" isFullWidth>
+                            Yes, delete this user
+                          </Button>
+                        </VStack>
+                      </PopoverBody>
+                    </PopoverContent>
+                  </Popover>
+                )}
 
                 {isEdit && (
                   <Button variant="solid" colorScheme="blue" type="submit" fontSize={{ base: 'xs', md: 'md' }}>
@@ -150,7 +216,12 @@ export const MyAccountPage = (): JSX.Element => {
               label="roles"
               value={
                 isEdit ? (
-                  <Input register={register} name="roles" isReadOnly defaultValue={getUserRoles(data)} />
+                  <Input
+                    register={register}
+                    name="roles"
+                    defaultValue={getUserRoles(data)}
+                    error={errors?.roles?.message}
+                  />
                 ) : (
                   getUserRoles(data)
                 )

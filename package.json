@@ -44,7 +44,7 @@
     "lint": "npx eslint 'src/**/*.{js,jsx,tsx,ts}'",
     "lint:fix": "npx eslint 'src/**/*.{js,jsx,tsx,ts}' --fix",
     "format": "npx prettier '**/*.{js,jsx,ts,tsx,json,css,scss,md}' --write",
-    "prepare": "cd .. && husky install bike-rental/.husky",
+    "prepare": "husky install",
     "type-check": "npx tsc --noEmit",
     "start": "react-scripts start",
     "build": "react-scripts build",

@@ -16,54 +16,55 @@ import {
   PopoverCloseButton,
   VStack,
   Text,
+  Select,
 } from '@chakra-ui/react';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { editUser, getUser, deleteUser, EditUserInput } from 'services/user.service';
 import { Card } from 'components/card/card';
 import { CardHeader } from 'components/card/card.header';
 import { CardContent } from 'components/card/card.content';
 import { Property } from 'components/card/card.property';
-import { User } from 'types/user.type';
 import { Input } from 'components/input/input';
 import { RequestStatus } from 'components/request-status/request-status';
 import createRequiredSchema from 'validations/required';
-import emailSchema from 'validations/email';
+import { Bike } from 'types/bike.type';
+import { useUserStore } from 'stores/user.store';
+import { deleteBike, editBike, getBike } from 'services/bike.service';
 
-interface FormInput extends Pick<User, 'name' | 'email'> {
-  roles: string;
-}
+type FormInput = Omit<Bike, 'id'>;
 
 const schema = yup.object().shape({
-  name: createRequiredSchema('name'),
-  email: emailSchema,
-  roles: createRequiredSchema('roles'),
+  model: createRequiredSchema('model'),
+  color: createRequiredSchema('color'),
+  location: createRequiredSchema('location'),
+  status: createRequiredSchema('status'),
 });
 
-export const UserDetailPage = (): JSX.Element => {
+export const BikeDetailPage = (): JSX.Element => {
   const [isEdit, setEdit] = useState(false);
-  const { userId } = useParams<{ userId: string }>();
+  const { bikeId } = useParams<{ bikeId: string }>();
   const queryClient = useQueryClient();
   const history = useHistory();
+  const user = useUserStore((state) => state.user);
   const toast = useToast();
-  const cacheKey = ['user', userId];
+  const cacheKey = ['bike', bikeId, user?.id];
 
-  const { data, error, isLoading } = useQuery<{ user: User }>(cacheKey, () => {
-    return getUser(userId);
+  const { data, error, isLoading } = useQuery<{ bike: Bike }>(cacheKey, () => {
+    return getBike(bikeId);
   });
 
-  const { mutate, error: mutationError } = useMutation(
-    ({ user }: { user: EditUserInput }) => {
-      return editUser(user);
+  const { mutate: editMutation, error: mutationError } = useMutation(
+    ({ bike }: { bike: Bike }) => {
+      return editBike(bike);
     },
     {
-      onSuccess: (dataSuccess, { user }) => {
-        queryClient.setQueryData<{ user: EditUserInput } | undefined>(cacheKey, (oldData) => {
+      onSuccess: (dataSuccess, { bike }) => {
+        queryClient.setQueryData<{ bike: Bike } | undefined>(cacheKey, (oldData) => {
           return oldData
             ? {
-                user,
+                bike,
               }
             : undefined;
         });
@@ -71,16 +72,16 @@ export const UserDetailPage = (): JSX.Element => {
     }
   );
 
-  const { mutate: deleteUserMutate, error: deleteMutationError } = useMutation(
-    (variables: { userId: User['id'] }) => {
-      return deleteUser(variables.userId);
+  const { mutate: deleteMutation, error: deleteMutationError } = useMutation(
+    (variables: { bikeId: Bike['id'] }) => {
+      return deleteBike(variables.bikeId);
     },
     {
       onSuccess: (dataSuccess, variables) => {
-        queryClient.setQueryData<{ users: User[] } | undefined>(['users'], (oldData) => {
+        queryClient.setQueryData<{ bikes: Bike[] } | undefined>(['bikes', user?.id], (oldData) => {
           return oldData
             ? {
-                users: oldData.users.filter((user) => user.id !== variables.userId),
+                bikes: oldData.bikes.filter((bike) => bike.id !== variables.bikeId),
               }
             : undefined;
         });
@@ -114,31 +115,31 @@ export const UserDetailPage = (): JSX.Element => {
   }
 
   function handleDelete() {
-    deleteUserMutate({ userId });
+    deleteMutation({ bikeId });
     history.goBack();
   }
 
-  const onSubmit: SubmitHandler<FormInput> = async (formData) => {
-    mutate({
-      user: {
+  const onSubmit: SubmitHandler<FormInput> = (formData) => {
+    editMutation({
+      bike: {
         ...formData,
-        id: userId,
+        id: bikeId,
       },
     });
     toggleEdit();
   };
 
   return (
-    <RequestStatus isLoading={isLoading} error={error} data={data} noResultsMessage="No user with this ID was found">
+    <RequestStatus isLoading={isLoading} error={error} data={data} noResultsMessage="No bike with this ID was found">
       <Box as="section">
         <Card maxW="3xl" mx="auto" as="form" onSubmit={handleSubmit(onSubmit)}>
           <CardHeader
-            title={data ? data.user?.name : ''}
+            title={data ? data.bike?.model : ''}
             prefix={
               <IconButton
                 aria-label="navigate back"
                 as={Link}
-                to="/manager/manage/users"
+                to="/manager/manage/bikes"
                 variant="outline"
                 icon={<IoIosArrowBack />}
                 fontSize={{ base: 'xs', md: 'md' }}
@@ -162,9 +163,9 @@ export const UserDetailPage = (): JSX.Element => {
                       <PopoverHeader>Confirmation!</PopoverHeader>
                       <PopoverBody>
                         <VStack>
-                          <Text>Are you sure you want delete this user?</Text>
+                          <Text>Are you sure you want delete this bike?</Text>
                           <Button colorScheme="red" onClick={handleDelete} variant="solid" isFullWidth>
-                            Yes, delete this user
+                            Yes, delete
                           </Button>
                         </VStack>
                       </PopoverBody>
@@ -182,48 +183,60 @@ export const UserDetailPage = (): JSX.Element => {
           />
           <CardContent>
             <Property
-              label="Name"
+              label="Model"
               value={
                 isEdit ? (
                   <Input
                     register={register}
-                    name="name"
-                    defaultValue={data?.user?.name}
-                    error={errors?.name?.message}
+                    name="model"
+                    defaultValue={data?.bike?.model}
+                    error={errors?.model?.message}
                   />
                 ) : (
-                  data?.user?.name
+                  data?.bike?.model
                 )
               }
             />
             <Property
-              label="Email"
+              label="Color"
               value={
                 isEdit ? (
                   <Input
                     register={register}
-                    name="email"
-                    defaultValue={data?.user?.email}
-                    error={errors?.email?.message}
-                    isReadOnly
+                    name="color"
+                    defaultValue={data?.bike?.color}
+                    error={errors?.color?.message}
                   />
                 ) : (
-                  data?.user?.email
+                  data?.bike?.color
                 )
               }
             />
             <Property
-              label="roles"
+              label="Location"
               value={
                 isEdit ? (
                   <Input
                     register={register}
-                    name="roles"
-                    defaultValue={getUserRoles(data)}
-                    error={errors?.roles?.message}
+                    name="location"
+                    defaultValue={data?.bike?.location}
+                    error={errors?.location?.message}
                   />
                 ) : (
-                  getUserRoles(data)
+                  data?.bike?.location
+                )
+              }
+            />
+            <Property
+              label="Availability"
+              value={
+                isEdit ? (
+                  <Select {...register('status')} name="status" defaultValue={data?.bike?.status}>
+                    <option value="available">Available</option>
+                    <option value="unavailable">Unavailable</option>
+                  </Select>
+                ) : (
+                  data?.bike?.status
                 )
               }
             />
@@ -233,11 +246,3 @@ export const UserDetailPage = (): JSX.Element => {
     </RequestStatus>
   );
 };
-
-function getUserRoles(data?: { user: User }): string | undefined {
-  if (!data || !data.user) {
-    return undefined;
-  }
-
-  return Array.isArray(data?.user.roles) ? data?.user.roles.join(',') : data?.user.roles;
-}

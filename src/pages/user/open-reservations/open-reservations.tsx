@@ -64,7 +64,7 @@ const initialQueryParams = {
   filters: {},
 };
 
-// the source of truth is the URL params
+// the source of truth is the URL param
 // the state of this app is tied to the URL params
 // the state is being shared with react-query, all cached
 // TODO: move the filter to its own component
